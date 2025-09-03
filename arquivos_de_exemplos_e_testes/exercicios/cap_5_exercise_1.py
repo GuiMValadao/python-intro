@@ -1,0 +1,1 @@
+#Algo similar ao feito no arquivo numeros, booleanos..., testando os diferentes tipos de numero.
