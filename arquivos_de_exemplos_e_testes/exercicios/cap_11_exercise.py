@@ -3,8 +3,11 @@
 #------------------------------------------------------------
 import random
 
+jogo = True
+adivinhacao = 0
 # Funçao para iniciar/reiniciar o jogo
-def replay(jogo):
+def replay():
+    global jogo
     if jogo == 's':
         jogo = True
         return jogo
@@ -13,33 +16,51 @@ def replay(jogo):
         return jogo
 
 # Funçao para iniciar/reiniciar o jogo
-def inicio(i=0):
+def inicio(i = 0):
+    global jogo
     if i == 0:
         i += 1
         print('Bem-vindo ao jogo de adivinhação de números!')
-        jogo = input('Quer jogar? (s/n)')
-        comecar = replay(jogo)
+        jogo = str(input('Quer jogar? (s/n)'))
+        comecar = replay()
         return comecar, i
     else:
         i += 1
-        jogo = input('Quer jogar novamente? (s/n)')
-        comecar = replay(jogo)
+        jogo = str(input('Quer jogar novamente? (s/n)'))
+        comecar = replay()
         return comecar, i
 
 # Funçao para obter input do usuario
 def tentativa(resposta):
-    adivinhacao = int(input('Dê seu palpite entre 1 e 20: '))
+    global adivinhacao
+    adivinhacao = input('Dê seu palpite entre 1 e 20: ')
+    chec_num()
     # Para roubar, obtendo a resposta sem perder uma chance
-    if adivinhacao == -1:
-        adivinhacao = cheat(adivinhacao, resposta)
+    if adivinhacao == '-1':
+        adivinhacao = cheat(resposta)
     return adivinhacao
 
+# Funçao para garantir que foi inserido um numero e que le esta entre 0 e 21.
+def chec_num():
+    global adivinhacao
+    while not((adivinhacao.isnumeric() and
+                0 < int(adivinhacao) <= 20) or
+        adivinhacao == '-1'):
+        adivinhacao = input('Por favor, insira um numero inteiro de 1 a 20: ')
+    return adivinhacao
+
+
 # Funçao que define o cheat
-def cheat(teste, resposta):
-    if teste == -1:
+def cheat(resposta):
+    global  adivinhacao
+    if adivinhacao == '-1':
         print('o numero correto e ', resposta)
-        adivinhacao = int(input('Dê seu palpite entre 1 e 20: '))
+        adivinhacao = input('Dê seu palpite entre 1 e 20: ')
+        chec_num()
+        cheat(resposta)
         return adivinhacao
+    return None
+
 
 # Funçao que verifica se o usuario acertou
 def vitoria(resposta, chances, guess):
@@ -71,6 +92,7 @@ def errado(chances, teste2, resposta):
 
 # Funçao definindo o loop principal do jogo
 def loop_jogo():
+    global jogo
     jogo = inicio()[0]
     while jogo == True:
 
@@ -82,7 +104,7 @@ def loop_jogo():
             guess = int(tentativa(resposta))
 
             # Verifica se o jogador adivinhou corretamente.
-            if vitoria(resposta, chances, guess) == False:
+            if not vitoria(resposta, chances, guess):
                 chances = errado(chances, guess, resposta)
             else:
                 break
