@@ -1,5 +1,7 @@
 #------------------------------------------------------------
-# Divida o jogo de adivinhaçao de numeros em funçoes menores.
+# Cap 8 - Jogo de adivinhacao
+# Cap 11 - Dividir o jogo de adivinhaçao em funçoes menores.
+# Cap 12 - Utilizar variaveis globais para simplificar o programa
 #------------------------------------------------------------
 import random
 
