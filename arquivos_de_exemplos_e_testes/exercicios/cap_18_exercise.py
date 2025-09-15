@@ -37,14 +37,14 @@ class Conta():
     e o tipo da conta.
     """
     def __init__(self, numero, nome, saldo, tipo):
-        """ Inicializa o objeto 'Conta' e salva suas informações. """
         self.numero = numero
         self.nome = nome
         self.saldo = saldo
         self.tipo = tipo
     
     def __str__(self):
-        return self.nome + ', conta ' + self.tipo + ' = R$ ' + str(self.saldo)
+        return 'Conta[' + self.numero + '] - ' + self.nome + ', conta ' + self.tipo + ' = R$ ' + str(self.saldo)
+    
     def depositar(self, valor):
         self.saldo = float(self.saldo) + float(valor)
         return self.saldo
@@ -57,12 +57,11 @@ class Conta():
         print('Seu saldo atual é de R$', self.saldo)
         return
 
-
-
 c1 = Conta('123', 'João', 340, 'corrente')
 c2 = Conta('456', 'João', 20.23, 'depósito')
 c3 = Conta('789', 'Carlo', 2340.54, 'investimento')
 
+print(Conta.__doc__)
 print('Titular:', c1.nome)
 print('Número da conta:', c1.numero)
 print('Saldo:', c1.saldo)
