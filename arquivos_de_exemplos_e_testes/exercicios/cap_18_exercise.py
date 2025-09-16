@@ -36,14 +36,25 @@ class Conta():
     número da conta; nome do titular da conta; um saldo de abertura
     e o tipo da conta.
     """
+    quantidade_contas = 0
+
+    @classmethod
+    def criar_conta(cls):
+        cls.quantidade_contas += 1
+
     def __init__(self, numero, nome, saldo, tipo):
-        self.numero = numero
+        informacoes = Conta.criar_conta()
+        self.numero = numero        
         self.nome = nome
         self.saldo = saldo
         self.tipo = tipo
-    
+        Conta.boas_vindas()
+
     def __str__(self):
-        return 'Conta[' + self.numero + '] - ' + self.nome + ', conta ' + self.tipo + ' = R$ ' + str(self.saldo)
+        saldo_string = str(self.saldo)
+        numero_string = str(self.numero)
+        return ('Conta[' + numero_string + '] - ' + self.nome + 
+                ', conta ' + self.tipo + ' = R$ ' + saldo_string)
     
     def depositar(self, valor):
         self.saldo = float(self.saldo) + float(valor)
@@ -57,11 +68,25 @@ class Conta():
         print('Seu saldo atual é de R$', self.saldo)
         return
 
-c1 = Conta('123', 'João', 340, 'corrente')
-c2 = Conta('456', 'João', 20.23, 'depósito')
-c3 = Conta('789', 'Carlo', 2340.54, 'investimento')
+    @staticmethod
+    def boas_vindas():
+        print('Bem vindo! Sua conta foi criada com sucesso!')
 
+    @classmethod
+    def quant_contas(self):
+        print(f'O número de instâncias de \
+contas criadas é de {self.quantidade_contas}')
+        
 print(Conta.__doc__)
+c1 = Conta(123, 'Gui', 200, 'corrente')
+print(c1.saldo)
+print(c1)
+c2 = Conta('456', 'João', 20.23, 'depósito')
+c2.depositar(245.23)
+print('Saldo:', c2.saldo)
+c2.depositar(245.23)
+print('Saldo:', c2.saldo)
+c3 = Conta('789', 'Carlo', 2340.54, 'investimento')
 print('Titular:', c1.nome)
 print('Número da conta:', c1.numero)
 print('Saldo:', c1.saldo)
@@ -74,3 +99,4 @@ c1.obter_saldo()
 print(c1)
 print(c2)
 print(c3)
+Conta.quant_contas()
