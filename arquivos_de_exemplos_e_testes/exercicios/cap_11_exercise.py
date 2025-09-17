@@ -10,25 +10,34 @@ adivinhacao = 0
 # Funçao para iniciar/reiniciar o jogo
 def replay():
     global jogo
-    if jogo == 's':
-        jogo = True
-        return jogo
-    else:
-        jogo = False
-        return jogo
-
+    x = False
+    while not x:
+        if jogo == 's':
+            jogo = True
+            x = True
+            return jogo
+        elif jogo == 'n':
+            jogo = False
+            x = True
+            return jogo
+        else:
+            jogo = input('Escolha "s" para jogar e "n" para sair.')
+            x = False
+        
 # Funçao para iniciar/reiniciar o jogo
 def inicio(i = 0):
     global jogo
     if i == 0:
         i += 1
+        print('-'*50)
         print('Bem-vindo ao jogo de adivinhação de números!')
-        jogo = str(input('Quer jogar? (s/n)'))
+        print('-'*50)
+        jogo = str(input('Quer jogar? (s/n)' ))
         comecar = replay()
         return comecar, i
     else:
         i += 1
-        jogo = str(input('Quer jogar novamente? (s/n)'))
+        jogo = str(input('Quer jogar novamente? (s/n) '))
         comecar = replay()
         return comecar, i
 
@@ -70,6 +79,7 @@ def vitoria(resposta, chances, guess):
         print('Parabéns! Você acertou!')
         print('Você precisou de', 5 - chances,
               'tentativas para vencer!')
+        print('-'*50)
         return True
     else:
         return False
@@ -108,10 +118,12 @@ def loop_jogo():
             # Verifica se o jogador adivinhou corretamente.
             if not vitoria(resposta, chances, guess):
                 chances = errado(chances, guess, resposta)
+                print('-'*50)
             else:
                 break
         jogo = inicio(1)[0]
 
 # Codigo rodando o jogo
 loop_jogo()
+print('-'*50)
 print('Fim de jogo.')
