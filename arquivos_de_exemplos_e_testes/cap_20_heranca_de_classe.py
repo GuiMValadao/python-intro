@@ -99,22 +99,22 @@ class Vendedor(Empregado):
 # o comportamento de inicialização daquela classe antes de definirmos
 # a classe 'Vendedor'.
 # Podemos agora escrever código como:
-print('Pessoa')
-p = Pessoa('John', 54)
-print(p)
-print('-'*25)
+#print('Pessoa')
+#p = Pessoa('John', 54)
+#print(p)
+#print('-'*25)
 
-print('Empregado')
-e = Empregado('Denise', 51, 7468)
-e.aniversario()
-print('e.calcular_salario(40):', e.calcular_salario(40))
-print('-'*25)
+#print('Empregado')
+#e = Empregado('Denise', 51, 7468)
+#e.aniversario()
+#print('e.calcular_salario(40):', e.calcular_salario(40))
+#print('-'*25)
 
-print('Vendedor')
-v = Vendedor('Phoebe', 21, 4712, 'UK', 30000.0)
-v.aniversario()
-print('v.calcular_salario(40):', v.calcular_salario(40))
-print('v.bonus():', v.bonus())
+#print('Vendedor')
+#v = Vendedor('Phoebe', 21, 4712, 'UK', 30000.0)
+#v.aniversario()
+#print('v.calcular_salario(40):', v.calcular_salario(40))
+#print('v.bonus():', v.bonus())
 
 # Note que não Empregado e Vendedor não interferem em nada
 # da classe Pessoa, assim como Vendedor não interfere em Pessoa e
@@ -251,3 +251,309 @@ print('v.bonus():', v.bonus())
 # O método em Employee substitui a versão em Person para todas as instâncias
 #-----------------------------------------------
 # Extendendo métodos de superclasse
+# No entanto, tivemos que duplicar o código de Pessoa para que Empregado
+# pudesse converter os atributos 'nome' e 'idade' em strings. Podemos 
+# evitar esta duplicação invocando o método da classe parente de dentro
+# da versão da classe filha (como fizemos de fato para o inicializador
+# __init__()).
+# Por exemplo:
+#class Person:
+#   def __init__(self, name, age):
+#       self.name = name
+#       self.age = age
+# 
+#   def __Str__(self):
+#       return self.name + ' is ' + str(self.age)
+#
+#class Employee(Person):
+#   def __init__(self, name, age, id):
+#       super().__init__(name,age)
+#       self.id = id
+#
+#   def __str__(self):
+#       return super().__str__() + '-id(' + str(self.id) + ')'
+
+# Nesta versão do código a versão do método __str__() da classe Employee
+# primeiro chama a versão da classe parente deste método e então adiciona
+# a informação local à string retornada dela. Isto significa que apenas
+# temos um local que converte name e age para uma string.
+# ---------------------------------------
+# Convenções de nomeação orientada por herança
+# Há duas convenções de nomeação para se estar ciente com respeito
+# a classes em Python. Elas são:
+# * Convenção de barra única 
+#       Métodos ou variáveis/atributos de instância (acessados
+#       através de 'self.') cujos nomes começam
+#       com uma única barra (_) são considerados como 'protegidos', 
+#       isto é, são privados à classe mas podem ser acessados de qualquer
+#       subclasse. Seu alcance é, portanto, a classe e subclasses.
+# * Convenção de barra dupla
+#       Métodos ou variáveis/atributos de instância (acessados por
+#       'self.') cujos nomes começam com uma barra dupla deveriam ser 
+#       considerados 'privados' àquela classe e não deveriam ser
+#       chamadas de fora da classe. Isto inclui qualquer subclasse;
+#       privado significa privado para a classe e apenas aquela classe.
+# Qualquer identificador na forma __somename(pelo menos duas barras
+# no início e no máximo uma barra no final) é textualmente substituído 
+# com _classname __somename, onde classname é o nome da classe atual 
+# sem a barra inicial.
+# Python faz o que é chamado como codificação/distorção de nomes(name mangling)
+# para fornecer algum suporte a métodos que começam com uma barra dupla.
+# Esta distorção é feita sem consideração à posição sintática do identificador,
+# de modo que pode ser usado para definir como privadas instâncias e 
+# variáveis de classe, métodos, variáveis armazenadas em globais e mesmo 
+# variáveis armazenadas em instâncias.
+#----------------------------------------
+# Python e herança múltipla
+# Python suporta a ideia de herança múltipla, isto é, uma classe pode
+# herdar de uma ou mais classes. A ideia é ilustrada no diagrama seguinte:
+#                           object
+#                             /\ 
+#                            /  \
+#                           /    \
+#                         Car  |  Toy
+#                           \      /
+#                            \    /
+#                             \  /
+#                              \/
+#                             ToyCar
+#
+# Neste caso, a classe 'ToyCar' herda da classe Car
+# e da classe 'Toy'. Por sua vez, as classes Car e Toy
+# herdam da (padrão) classe base 'object'.
+# A sintaxe para definir herança múltipla em Python permite múltiplas
+# superclasses serem listadas na lista de classes parente (definida 
+# pelos braquetes após o nome da classe). Cada classe parente é separada
+# por uma vírgula. A sintaxe é, assim:
+#class SubClassName(BaseClassName1, BaseClassName2, ...
+#BaseClassNameN):
+#   class-body
+#
+# Por exemplo:
+#
+#class Car:
+#   """ Car """
+#
+#class Toy:
+#   """ Toy """ 
+#
+#class ToyCar(Car, Toy):
+#   """ A Toy Car """
+#
+# Podemos dizer que a classe ToyCar herda todos os atributos(dados)
+# e métodos(comportamento) definidos nas classes Car, Toy e object.
+# Uma das questões fundamentais que isto gera é a herança de comportamento
+# gerenciada dentro de uma hierarquia de herança múltipla. O desafio que
+# herança múltipla possui é ilustrado adicionando alguns métodos à
+# hierarquia de classes que estamos olhando. Neste exemplo adicionamos
+# o método 'move()' para tanto a classe Car quanto Toy:
+#                           object
+#                             /\ 
+#                            /  \
+#                           /    \
+#                         Car  |  Toy
+#                        move()| move()
+#                           \      /
+#                            \    /
+#                             \  /
+#                              \/
+#                             ToyCar
+#
+# A questão aqui é qual versão do método 'move()' será executado quando uma
+# instância da classe ToyCar é instanciada e chamamos toy_car.move()?
+# Isso ilustra uma versão simples do problema chamado 'herança diamante'.
+# O problema é que com multiplas classes base da qual atributos
+# ou métodos podem ser herdados, há frequentemente ambiguidade que precisa
+# ser resolvida. Aqui, quando criamos uma instância da classe ToyCar, e
+# chamamos o método move(), isto invoca o método herdade da clase base Car 
+# ou da classe base Toy?
+# A resposta é que em Python 3, uma procura 'largura primeiro'(breadth first)
+# é usada para encontrar métodos definidos em classes parentes; isto
+# significa que quando o método 'move()' é chamado em ToyCar, primeiro
+# olharia em Car; então olharia em Toy se não pudesse encontrar um 
+# método 'move()' em 'Car'; então olharia em Toy se não pudesse encontrar
+# um método move() em Car. Se não puder encontrar o método em Carro nem
+# em Toy olharia na classe object.
+# Como resultado, irá encontrar a versão de Car primeiro e usar aquela versão.
+# Isto é mostrado abaixo:
+class Car:
+   def move(self):
+       print('Car-move()')
+
+class Toy:
+   def move(self):
+       print('Toy - move()')
+
+class ToyCar(Car, Toy):
+   """ A Toy Car """
+
+# A saída disto é:
+# Car - move()
+# Entretanto, se alteramos a ordem na qual ToyCar herda da classe 
+# parente tal que trocamos Toy e Car:
+class ToyCar(Toy, Car):
+    """ A Toy Car """
+
+#tc = ToyCar()
+#tc.move()
+
+# Então a classe Toy é procurada primeiro e a saída é alterada para
+# Toy - move(). Isto mostra que a ordem em que uma classe herda de
+# múltiplas classes é 'significante' em Python.
+#----------------------------------
+# Herança múltipla considerada prejudicial
+# À primeira vista, herança múltipla em Python poderia parecer
+# particularmente útil pois permite misturar múltiplos conceitos em 
+# uma única classe muito facilmente e rapidamente. Isto é certamente 
+# verdade e pode ser um recurso muito útil se usado com cuidado.
+# Entretanto, a palavra 'cuidado' é usada aqui e deve ser levada em conta.
+# Múltiplas heranças podem também ser muito perigosas e são um 
+# tópico contingencioso para programadores e para aqueles projetando
+# linguagens de programação. Poucas coisas em programação são inherentemente
+# ruins mas herança múltipla pode resultar em um nível de complexidade
+# (e comportamento inesperado) que pode prender desenvolvedores em nós.
+# Parte do problema destacado por aqueles protestando contra herança 
+# múltipla se resume à complexidade aumentada e ambiguidade que pode 
+# ocorrer com árvores de heranças múltiplas que podem interconectar entre
+# as classes diferentes. Um jeito de pensar nisso é que se uma classe herda
+# de múltiplas classes, então aquela classe pode ter as mesmas classes
+# múltiplas vezes na hierarquia de classes, isto pode tornar difícil 
+# determinar qual versão de um método pode executar e isto poderia permitir 
+# bugs ficarem intocados ou introduzir problemas esperados devido 
+# diferentes interações entre os métodos. Isto é exacerbado quando os métodos
+# herdados chamam super() usando o mesmo nome de método como:
+#def get_data(self):
+#   return super().get_data() + 'FData'
+# O diagrama da pág. 226 mostra um exemplo de herança múltipla mais ou
+# menos convolutos onde os nomes de classe A-X foram usadas de modo que não 
+# há significado semântico atribuível para as classes herdadas. Classes 
+# diferentes definem muitos métodos comuns (print_info()) e get_data())
+# Todas as classes na hierarquia definem um método __str__()  que
+# retorna o nome da classe; se a classe extende uma classe diferente da
+# 'object', então a versão super de __str__() também é invocada.
+# O código para a hierarquia de classe do diagrama á mostrado abaixo:
+
+class A:
+    def __str__(self):
+        return 'A'
+    def print_info(self):
+        print('A')
+
+class B:
+    def __str__(self):
+        return 'B'
+
+class C:
+    def __str__(self):
+        return 'C'
+    def get_data(self):
+        return 'CData'
+
+class D:
+    def __str__(self):
+        return 'D'
+    def print_info(self):
+        print('D')
+
+class E:
+    def __str__(self):
+        return 'E'
+    def print_info(self):
+        print('E')
+
+class F(C, D, E):
+    def __str__(self):
+        return super().__str__() + 'F'
+    def get_data(self):
+        return super().get_data() + 'FData'
+    def print_info(self):
+        print('F' + self.get_data())
+
+class G(C, D, E):
+    def __str__(self):
+        return super().__str__() + 'G'
+    def get_data(self):
+        return super().get_data() + 'GData'
+
+class H(F, G):
+    def __str__(self):
+        return super().__str__() + 'H'
+    def print_info(self):
+        print('H' + self.get_data())
+
+class J(H):
+    def __str__(self):
+        return super().__str__() + 'J'
+
+class I(A, J):
+    def __str__(self):
+        return super().__str__() + 'I'
+
+class X(J, H, B):
+    def __str__(self):
+        return super().__str__() + 'X'
+
+# Podemos agora usar a classe X em um programa simples Python:
+
+x = X()
+print('print(x):', x)
+print('-' * 25)
+x.print_info()
+
+# A saída deste código simples é
+#print(x): CGFHJX
+#-------------------------
+#HCDataGDataFData
+#
+# No entanto, se trocamos a ordem da herança de classe de 'H' de (F, G)
+# para (G, F), então a saída muda.
+#print(x): CFGHJX
+#-------------------------
+#HCDataFDataGData
+#
+# Isto é, claro, por causa da ordem de procura pela hierarquia de classes 
+# agora é diferente.
+# Note que esta mudança ocorreu não por causa de uma modificação à classe 
+# que instanciamos (neste caso a X), mas à ordem de classes que uma de suas 
+# parentes herda.
+# Obviamente, Python não é ambíguo nem se confunde; é o desenvolvedor humano
+# que pode se confundir e surpreender com o comportamento que é, então,
+# apresentado. De fato, se tentar definir uma hierarquia de classes que
+# Python não pode resolver em uma estrutura consistente, você será informado.
+# O que pode ser confuso é que a habilidade de Python de produzir um
+# estrutura consistente também pode ser dependente na ordem da herança.
+# Por exemplo, se modificamos as classes que 'X' herda de forma que a 
+# ordem é 'I' e 'J':
+#class X(I, J):
+#   def __str__(self):
+#       return super().__str__() + 'X'
+#
+# Então isto compila e pode ser usado com o código anterior(apesar 
+# que com saída diferente)
+#print(x): AIX
+#-------------------------
+#A
+#
+# Entretanto, se mudarmos a ordem das classes parentes de modo que
+# trocamos 'I' e 'J':
+#class X(J, I):
+#   def __str__(self):
+#       return super().__str__() + 'X'
+# 
+# Recebos uma exeção TypeError:
+#Traceback (most recent call last):
+#File "multiple_inheritance_example.py", line 73, in <module>
+#class X(J, I):
+#TypeError: Cannot create a consistent method resolution
+#order (MRO) for bases J, I
+#
+# Portanto, em geral, é necessário ter cuidado quando
+# usando herança múltipla; mas isto não quer dizer que tais situações
+# não são úteis. Em alguns casos, você quer que uma classe herde
+# da parente que tem hierarquia completamente diferentes hierarquias
+# e são completamente separadas uma da outra; tais situações herança
+# múltipla pode ser muito útil - esses chamados 'comportamentos
+# ortogonais' são uns dos melhores usos de herança múltipla e não 
+# deveriam ser ignorados simplesmente devido preocupações de complexidade
+# aumentada.
+#
