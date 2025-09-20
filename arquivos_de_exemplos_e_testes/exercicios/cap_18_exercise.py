@@ -1,72 +1,45 @@
 #########################################################################
-# The aim of this exercise is to create a new class called Account.
-#1. Define a new class to represent a type of bank account.
-#2. When the class is instantiated you should provide the account number, the name
-#of the account holder, an opening balance and the type of account (which can be
-#a string representing 'current', 'deposit' or 'investment' etc.). This means that
-#there must be an __init__ method and you will need to store the data within
-#the object.
-#3. Provide three instance methods for the Account; deposit(amount),
-#withdraw(amount) and get_balance(). The behaviour of these
-#methods should be as expected, deposit will increase the balance, withdraw will
-#decrease the balance and get_balance() returns the current balance.
-#4. Define a simple test application to verify the behaviour of your Account class.
-#It can be helpful to see how your class Account is expected to be used. For this
-#reason a simple test application for the Account is given below:
-#The following output illustrates what the result of running this test application
-#might look like:
-#acc1 = Account('123', 'John', 10.05, 'current')
-#acc2 = Account('345', 'John', 23.55, 'savings')
-#acc3 = Account('567', 'Phoebe', 12.45, 'investment')
-#print(acc1)
-#print(acc2)
-#print(acc3)
-#acc1.deposit(23.45)
-#acc1.withdraw(12.33)
-#print('balance:', acc1.get_balance())
-#Account[123] - John, current account = 10.05
-#Account[345] - John, savings account = 23.55
-#Account[567] - Phoebe, investment account = 12.45
-#balance: 21.17
+# Cap 18 - criar classe 'Conta'
+# Cap 20 - criar subclasses 'ContaDeposito', 'ContaCorrente' e 
+# 'ContaInvestimento'
 ##########################################################################
 
 class Conta():
     """ Esta classe cria objetos que contém informações
     a respeito de uma conta bancária contendo as seguintes informações:
     número da conta; nome do titular da conta; um saldo de abertura
-    e o tipo da conta.
-    """
+    e o tipo da conta."""
     quantidade_contas = 0
 
     @classmethod
     def criar_conta(cls):
         cls.quantidade_contas += 1
 
-    def __init__(self, numero, nome, saldo, tipo):
+    def __init__(self, numero, nome, saldo):
         informacoes = Conta.criar_conta()
         self.numero = numero        
         self.nome = nome
         self.saldo = saldo
-        self.tipo = tipo
         Conta.boas_vindas()
 
     def __str__(self):
-        saldo_string = str(self.saldo)
-        numero_string = str(self.numero)
-        return ('Conta[' + numero_string + '] - ' + self.nome + 
-                ', conta ' + self.tipo + ' = R$ ' + saldo_string)
+        return (f'Conta[{self.numero}] - {self.nome}\
+, saldo = R$  {self.saldo:.2f}')
     
     def depositar(self, valor):
         self.saldo = float(self.saldo) + float(valor)
         return self.saldo
 
     def saque(self, valor):
-        self.saldo = float(self.saldo) - float(valor)
-        return self.saldo
+        maximo = self.saldo
+        if valor < maximo:
+            self.saldo = float(maximo) - float(valor)
+            return self.saldo
+        else:
+            print('Valor de saque solicitado acima do saldo disponível.')
     
     def obter_saldo(self):
-        print('Seu saldo atual é de R$', self.saldo)
-        return
+        return f'Seu saldo atual é de R$ {self.saldo}'
 
     @staticmethod
     def boas_vindas():
@@ -77,26 +50,51 @@ class Conta():
         print(f'O número de instâncias de \
 contas criadas é de {self.quantidade_contas}')
         
-print(Conta.__doc__)
-c1 = Conta(123, 'Gui', 200, 'corrente')
-print(c1.saldo)
-print(c1)
-c2 = Conta('456', 'João', 20.23, 'depósito')
-c2.depositar(245.23)
-print('Saldo:', c2.saldo)
-c2.depositar(245.23)
-print('Saldo:', c2.saldo)
-c3 = Conta('789', 'Carlo', 2340.54, 'investimento')
-print('Titular:', c1.nome)
-print('Número da conta:', c1.numero)
-print('Saldo:', c1.saldo)
-print('Tipo de conta:', c1.tipo)
-c1.depositar(245.23)
-print('Saldo:', c1.saldo)
-c1.saque(105.04)
-print('Saldo:', c1.saldo)
-c1.obter_saldo()
-print(c1)
-print(c2)
-print(c3)
-Conta.quant_contas()
+class ContaCorrente(Conta):
+    """ Esta subclasse fornece o atributo limite de crédito e 
+        expande o método saque para permitir sacar do valor de crédito."""
+    def __init__(self, numero, nome, saldo, limite ):
+        super().__init__(numero, nome, saldo)
+        self.limite = limite
+    
+    def __str__(self):
+        return super().__str__() + f', seu limite de crédito\
+ é R$ {self.limite:.2f}'
+
+    def saque(self, valor):
+        maximo = self.saldo + self.limite
+        if valor < maximo:
+            self.saldo = float(self.saldo) - float(valor)
+            if self.saldo < 0:
+                self.limite = self.limite + self.saldo
+                self.saldo = 0.00
+            return self.saldo, self.limite
+        else:
+            print('Transação interrompida, valor ' \
+            'de saque excederia o limite de crédito.')
+
+class ContaPoupanca(Conta):
+    """ Esta subclasse possibilita a aplicação de juros
+        sobre o saldo em conta. """
+    def __init__(self, numero, nome, saldo, juros):
+        super().__init__(numero, nome, saldo)
+        self.juros = juros
+    
+    def __str__(self):
+        return super().__str__() + f', juros de {self.juros:.2f}%'
+
+class ContaInvestimento(Conta):
+    """ Esta subclasse adiciona um atributo 'tipo de investimento'."""
+    def __init__(self, numero, nome, saldo, tipo_investimento):
+        super().__init__(numero, nome, saldo)
+        self.tipo_investimento = tipo_investimento
+    
+    def __str__(self):
+        return super().__str__() + f', investimento é de \
+{self.tipo_investimento}'
+
+acc1 = Conta('123', 'João', 210.12)
+print(acc1)
+acc1.saque(211)
+print(acc1)
+print(acc1.obter_saldo())

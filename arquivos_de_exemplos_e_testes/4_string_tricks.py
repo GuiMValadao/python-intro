@@ -83,7 +83,7 @@ some_string = 'Hello World'
 
 #format_string = "{artista} lançou {musica} em {ano}"
 #print(format_string.format(artista='Judas Priest', musica='Invincible shield', ano='2024')) # Os indices podem ser nomes para diminuir a chance de confundir as posiçoes
-/
+
 #print('|{:35}|'.format('largura de 35 caracteres'))     #Pode-se usar o metodo format() para definir largura e alinhamento da string.
 #print('|{:<35}|'.format('alinhado a esquerda'))         #Por padrao, se nao explicito, a string e alinhada a esquerda
 #print('|{:>35}|'.format('alinhado a direita'))
