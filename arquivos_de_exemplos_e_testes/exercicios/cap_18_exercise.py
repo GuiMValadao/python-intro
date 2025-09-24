@@ -3,6 +3,7 @@
 # Cap 20 - criar subclasses 'ContaDeposito', 'ContaCorrente' e 
 # 'ContaInvestimento'
 # Cap 23 - tornar obter_saldo leitura-apenas.
+# Cap 24 - adicionar suporte a erros
 ##########################################################################
 
 class Conta(object):
@@ -27,18 +28,22 @@ class Conta(object):
 
     def depositar(self, valor):
         """ Altera o saldo de acordo com o valor de depósito """
-        self.saldo = float(self.saldo) + float(valor)
-        return self.saldo
+        if valor > 0:
+            self.saldo = float(self.saldo) + float(valor)
+            return self.saldo
+        else:
+            raise ErroQuantidade(valor, self)       # Não teria problema fornecer todas as informações da classe a outra classe?
 
     def saque(self, valor):
         """ Altera o saldo de acordo com o valor de saque """
         maximo = self.saldo
-        if (valor < maximo):
+        if valor < 0:
+            raise ErroQuantidade(valor, self)
+        elif (valor < maximo):
             self.saldo = float(maximo) - float(valor)
             return self.saldo
         else:
-            print('Valor de saque solicitado acima do saldo disponível.')
-            return self.saldo
+            raise ErroSaldo(self)
         
     @property
     def obter_saldo(self):
@@ -82,15 +87,16 @@ class ContaCorrente(Conta):
             permitindo saques acima do saldo, mas limitando o saque 
             pela soma do saldo e limite """
         maximo = self.saldo + self._limite
-        if valor < maximo:
+        if valor < 0:
+            raise ErroQuantidade(valor, self)
+        elif valor < maximo:
             self.saldo = float(self.saldo) - float(valor)
             if self.saldo < 0:
                 self._limite = self._limite + self.saldo
                 self.saldo = 0.00
             return self.saldo, self._limite
         else:
-            print('Transação interrompida, valor ' \
-            'de saque excederia o limite de crédito.')
+            raise ErroSaldo(self)
 
 class ContaPoupanca(Conta):
     """ Esta subclasse possibilita a aplicação de juros
@@ -122,15 +128,58 @@ class ContaInvestimento(Conta):
         return super().__str__() + f', investimento é de \
 {self._tipo_investimento}'
 
+class ErroQuantidade(Exception):
+    """ Gera erro caso o valor de saque/depósito
+        seja negativo. """
+    def __init__(self, valor, conta):
+        self.valor = valor
+        self.conta = conta
+    
+    def __str__(self):
+        return 'ErroQuantidade (valor de transações não devem ser' \
+        ' negativos) na ' + f'{self.conta}'
+
+class ErroSaldo(Exception):
+    """ Gera erro caso o valor de saque ultrapasse o limite de
+        saldo + crédito """
+    def __init__(self, conta):
+        self.conta = conta
+    
+    def __str__(self):
+        return 'ErroSaldo (valor de saque superior ao máximo' \
+        ' crédito disponível) na ' + f'{self.conta}'
+    
+
+
 acc1 = ContaCorrente('123', 'John', 10.05, 100.0)
-acc2 = ContaPoupanca('345', 'John', 23.55, 0.5)
+acc2 = ContaCorrente('345', 'John', 23.55, 250.0)
 acc3 = ContaInvestimento('567', 'Phoebe', 12.45, 'alto risco')
-print(acc1)
-print(acc2)
-print(acc3)
+#print(acc1)
+#print(acc2)
+#print(acc3)
 acc1.saque(10.04)
-print(f'{acc1.obter_saldo:.2f}')
-print(Conta.quant_contas())
-print(f'Seu saldo atual é de R$ {acc1.obter_saldo:.2f}')
-acc1.saque(300.00)
-print(f'Seu saldo atual é de R$ {acc1.obter_saldo:.2f}')
+#print(f'{acc1.obter_saldo:.2f}')
+#print(Conta.quant_contas())
+#print(f'Seu saldo atual é de R$ {acc1.obter_saldo:.2f}')
+#print(f'Seu saldo atual é de R$ {acc1.obter_saldo:.2f}')
+
+try:
+    print(f'saldo: {acc1.saldo:.2f}')
+    acc1.saque(-300.00)
+    print(f'saldo: {acc1.saldo:.2f}')
+except ErroQuantidade as q:
+    print('Resolvendo exceção q')
+    print(q)
+except ErroSaldo as s:
+    print('Resolvendo exceção s')
+    print(s)
+
+try:
+    acc2.saque(1000)
+    print(f'saldo: {acc2.saldo:.2f}')
+except ErroQuantidade as q:
+    print('Resolvendo exceção q')
+    print(q)
+except ErroSaldo as s:
+    print('Resolvendo exceção s')
+    print(s)
