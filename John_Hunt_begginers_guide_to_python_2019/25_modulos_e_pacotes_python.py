@@ -35,4 +35,21 @@
 #   * Reusabilidade -   Definir uma função ou classe em um módulo significa
 #       que é mais fácil reutilizá-la em outro módulo, como os limites
 #       entre um módulo e outro são claros.
-#   * Escopo -  Módulos
+#   * Escopo -  Módulos tipicamente também definem um espaço de nomes,
+#       isto é, um escopo dentro do qual cada função ou classe são únicas.
+#       Pense no espaço de nomes como algo parecido com um sobrenome. 
+#       dentro de uma sala podem ter muitas pessoas com o primeiro
+#       nome 'John', mas podemos diferenciar entre elas usando seu nome 
+#       completo, por exemplo, 'John Hunt', 'John Jones', 'John Smith',
+#       cada sobrenome neste exemplo fornece um espaço de nomes que 
+#       garante que cada John é único.
+#---------------------------------------
+# Módulos Python
+# Em Python, um módulo equivale a um arquivo contendo código Python.
+# Um módulo pode conter:
+#   * Funções
+#   * Classes
+#   * Variáveis
+#   * Código executável
+#   * Atributos associados com o módulo como seu nome.
+# O nome de um módulo é o nome do arquivo que é definido 
