@@ -141,7 +141,7 @@
 #   def __init__(self, id):
 #       self.id = id
 # Note que, neste ponto, apesar de Shape ser uma ABC, não define 
-# nenhuma elemento abstrato e, assim, pode de fato ser instanciada
+# nenhum elemento abstrato e, assim, pode de fato ser instanciada
 # como qualquer outra classe concreta. Entretanto, em seguida definiremos 
 # alguns métodos abstratos para a ABC Shape.
 # Para definir um método abstrato, precisamos também importar o decorador
@@ -156,7 +156,7 @@
 #
 #   @abstractmethod
 #   def display(self): pass
-# 
+#   
 #   @property
 #   @abstractmethod
 #   def id(self): pass

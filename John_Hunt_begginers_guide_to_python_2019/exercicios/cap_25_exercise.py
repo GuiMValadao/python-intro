@@ -11,7 +11,7 @@
 import fintech.accounts as accounts
 
 acc1 = accounts.ContaCorrente('123', 'John', 10.05, 100.0)
-acc2 = accounts.ContaCorrente('345', 'John', 23.55, 250.0)
+acc2 = accounts.ContaPoupanca('345', 'John', 23.55, 0.5)
 acc3 = accounts.ContaInvestimento('567', 'Phoebe', 12.45, 'alto risco')
 print(acc1)
 print(acc2)

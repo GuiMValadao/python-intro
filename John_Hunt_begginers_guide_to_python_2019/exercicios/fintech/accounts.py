@@ -1,9 +1,13 @@
 """ 
-Este módulo cria contas bancárias de quatro tipos diferentes:
-- comum, corrente, poupança e investimento. 
+Este módulo cria contas bancárias de três tipos diferentes:
+corrente, poupança e investimento, todas sendo subclasse da
+classe base abstrata Conta
 """
-class Conta(object):
-    """ Esta classe cria objetos que contém informações
+
+from abc import ABCMeta, abstractmethod
+
+class Conta(metaclass=ABCMeta):
+    """ Esta classe abstrata cria objetos que contém informações
     a respeito de uma conta bancária contendo as seguintes informações:
     número da conta; nome do titular da conta; um saldo de abertura."""
 
@@ -57,6 +61,7 @@ class Conta(object):
         return (f'O número de instâncias de \
 contas criadas é de {cls.quantidade_contas}')
     
+    @abstractmethod
     def __str__(self):
         """ Exibe as informações da instância de classe chamada """
         return (f'Conta[{self._numero}] - {self._nome}\
