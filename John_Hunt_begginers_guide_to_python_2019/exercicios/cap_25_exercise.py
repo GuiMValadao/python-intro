@@ -42,3 +42,8 @@ except accounts.ErroQuantidade as q:
 except accounts.ErroSaldo as s:
     print('Resolvendo exceção s')
     print(s)
+
+with accounts.ContaCorrente('891', 'Adam', 5.0, 00.0) as acc:
+    acc.depositar(13.0)
+    acc.saque(22.33)
+    print(acc.saldo)

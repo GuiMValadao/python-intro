@@ -12,7 +12,7 @@ class Conta(metaclass=ABCMeta):
     número da conta; nome do titular da conta; um saldo de abertura."""
 
     quantidade_contas = 0
-
+    
     @classmethod
     def criar_conta(cls):
         """ Mantém contagem do número total de contas """
@@ -26,6 +26,14 @@ class Conta(metaclass=ABCMeta):
         self.saldo = saldo
         Conta.boas_vindas()
 
+    def __enter__(self):
+        print('__enter__')
+        return self
+    
+    def __exit__(self, *args):
+        print('__exit__:', args)
+        return True
+    
     def depositar(self, valor):
         """ Altera o saldo de acordo com o valor de depósito """
         if valor > 0:
