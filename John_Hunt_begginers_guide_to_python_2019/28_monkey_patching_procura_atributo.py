@@ -255,7 +255,7 @@
 # notação ponto implementando o método __getattribute__(). Este método
 # sempre será chamado em vez de procurar atributos no dicionário do
 # objeto. O método __getattr__() será apenas chamado se for gerado
-# um AttributeError ou se o método __getattribute_() cham=a-lo explicitamente.
+# um AttributeError ou se o método __getattribute_() chamá-lo explicitamente.
 # O método __getattribute__() deveria, portanto, retornar um valor de
 # atributo(que pode ser um valor padrão) ou gerar um AttributeError
 # se apropriado. É importanto evitar implementar código que chamará 

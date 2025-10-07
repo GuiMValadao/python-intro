@@ -74,7 +74,11 @@ contas criadas é de {cls.quantidade_contas}')
         """ Exibe as informações da instância de classe chamada """
         return (f'Conta[{self._numero}] - {self._nome}\
 , saldo = R$  {self.saldo:.2f}')
-        
+    
+    def __getattr__(self, attribute):
+        print('__getattr__: atributo desconhecido acessado - ', attribute)
+        return f'self.{attribute}: -1'  
+
 class ContaCorrente(Conta):
     """ Esta subclasse fornece o atributo limite de crédito e 
         expande o método saque para permitir sacar do valor de crédito."""
