@@ -1,16 +1,10 @@
-def solution(k = int):
-    k = int(k)
-    nums=[1]
-    summer, appender = 0, 0
-    nums[len(nums)-1] += (k+1)//(k//10)
-    summer += (k+1)//(k//10)
-    while sum(nums) <= k:
-        nums.append(nums[len(nums)-1])
-    appender = len(nums)-1
-    return summer + appender
-            
+def print_formatted(number):
+    length = len(str(bin(number)))
+    for i in range(1, number):
+        print(str(i).rjust(length, ' '), 
+              oct(i).rjust(length, ' ').replace('0o', ''),
+              hex(i).rjust(length, ' ').replace('0x', ''), 
+              bin(i).rjust(length, ' ').replace('0b', ''))
 
-
-
-n = input()
-print(solution(n))
+n = int(input())
+print_formatted(n)
