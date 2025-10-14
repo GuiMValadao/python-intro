@@ -5,7 +5,7 @@ classe base abstrata Conta
 """
 
 from abc import ABCMeta, abstractmethod
-
+from fintech.timer import timer
 class Conta(metaclass=ABCMeta):
     """ Esta classe abstrata cria objetos que contém informações
     a respeito de uma conta bancária contendo as seguintes informações:
@@ -34,6 +34,7 @@ class Conta(metaclass=ABCMeta):
         print('__exit__:', args)
         return True
     
+    @timer
     def depositar(self, valor):
         """ Altera o saldo de acordo com o valor de depósito """
         if valor > 0:
@@ -42,6 +43,7 @@ class Conta(metaclass=ABCMeta):
         else:
             raise ErroQuantidade(valor, self)       # Não teria problema fornecer todas as informações da classe a outra classe?
 
+    @timer
     def saque(self, valor):
         """ Altera o saldo de acordo com o valor de saque """
         maximo = self.saldo
@@ -95,6 +97,7 @@ class ContaCorrente(Conta):
         return super().__str__() + f', seu limite de crédito\
  é R$ {self._limite:.2f}'
 
+    @timer
     def saque(self, valor):
         """ Altera a funcionalidade do método saque da função parente,
             permitindo saques acima do saldo, mas limitando o saque 

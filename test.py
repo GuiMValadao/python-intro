@@ -1,10 +1,16 @@
-def print_formatted(number):
-    length = len(str(bin(number)))
-    for i in range(1, number):
-        print(str(i).rjust(length, ' '), 
-              oct(i).rjust(length, ' ').replace('0o', ''),
-              hex(i).rjust(length, ' ').replace('0x', ''), 
-              bin(i).rjust(length, ' ').replace('0b', ''))
+class Solution:
+    def __init__(self, num1: int, num2: int):
+        self.num1 = num1
+        self.num2 = num2       
+    
+    def sum(self ) -> int:
+        #print(num1 + num2)
 
-n = int(input())
-print_formatted(n)
+        return self.num1 + self.num2
+
+
+
+#num1 = int(input())
+#num2 = int(input())
+sol = Solution(int(input()), int(input())).sum()
+print(sol)
