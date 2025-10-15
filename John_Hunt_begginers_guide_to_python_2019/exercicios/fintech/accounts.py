@@ -23,9 +23,11 @@ class Conta(metaclass=ABCMeta):
         Conta.criar_conta()
         self._numero = numero        
         self._nome = nome
-        self.saldo = saldo
+        self._saldo = saldo
         Conta.boas_vindas()
-
+    def saldo(self):
+        return self._saldo
+    
     def __enter__(self):
         print('__enter__')
         return self
