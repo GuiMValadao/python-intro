@@ -1,7 +1,7 @@
-def log_transacao(func):
-    pass
+#def log_transacao(func):
+#    pass
 
-@log_transacao
+#@log_transacao
 def cadastrar_usuario(nome, data_nascimento, cpf, 
                       endereco, usuarios_cadastrados):
     """
@@ -31,8 +31,7 @@ def cadastrar_usuario(nome, data_nascimento, cpf,
             else:
                 print('Usuário já cadastrado!')
                 return cpf
-
-@log_transacao
+#@log_transacao
 def criar_conta_corrente(cpf, contas_cadastradas, extrato):
     """
     Armazena contas em uma lista. Cada conta possuirá:
@@ -56,7 +55,7 @@ def criar_conta_corrente(cpf, contas_cadastradas, extrato):
         conta['numero_da_conta'] = ultima_conta + 1        
     return conta
 
-@log_transacao
+#@log_transacao
 def saque(*, saldo, valor, extrato, limite, 
           numero_saques, LIMITE_SAQUES):
     """ 
@@ -100,7 +99,7 @@ def saque(*, saldo, valor, extrato, limite,
         print("Operação falhou! O valor informado é inválido.")
     return round(saldo,2), extrato, numero_saques
 
-@log_transacao
+#@log_transacao
 def deposito(saldo, valor, extrato):
     """
     Permite que um usuário faça depósito.
@@ -136,7 +135,7 @@ def modificar_extrato(extrato, operacao, valor):
     
     return extrato
 
-@log_transacao
+#@log_transacao
 def exibir_extrato(conta):
     print("""
 ---------------------------

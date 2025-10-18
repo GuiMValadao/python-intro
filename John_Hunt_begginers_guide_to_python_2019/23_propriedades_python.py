@@ -222,7 +222,7 @@ class Person:
     def name(self):
         del self._name
     def __str__(self):
-        return 'Person[' + str(self._name) +'] is ' + str(self._age)
+        return 'Person[' + str(self.name) +'] is ' + str(self.age)
 
 # Note três coisas importantes neste exemplo:
 #   *   O nome dos métodos não são mais set_age e get_age; em
@@ -241,5 +241,6 @@ print(p1)
 print(p1.age)
 p1.age = 25     # define novo valor à idade pela existência do atribuidor
 print(p1.age)
-del p1.name     # deleta o nome devido a propriedade criada
+#del p1.name     # deleta o nome devido a propriedade criada
 print(p1.name)  # resulta em erro, pois o nome foi deletado
+print(p1)

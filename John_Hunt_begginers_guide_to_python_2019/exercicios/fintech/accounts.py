@@ -5,7 +5,8 @@ classe base abstrata Conta
 """
 
 from abc import ABCMeta, abstractmethod
-from fintech.timer import timer
+#from fintech.timer import cronometro
+
 class Conta(metaclass=ABCMeta):
     """ Esta classe abstrata cria objetos que contém informações
     a respeito de uma conta bancária contendo as seguintes informações:
@@ -24,9 +25,18 @@ class Conta(metaclass=ABCMeta):
         self._numero = numero        
         self._nome = nome
         self._saldo = saldo
+        self.indice = 0
+        self.historico = []
+        self.historico = []
         Conta.boas_vindas()
-    def saldo(self):
-        return self._saldo
+    
+    @property
+    def numero(self):
+        return self._numero
+    
+    @property
+    def nome(self):
+        return self._nome
     
     def __enter__(self):
         print('__enter__')
@@ -35,32 +45,49 @@ class Conta(metaclass=ABCMeta):
     def __exit__(self, *args):
         print('__exit__:', args)
         return True
-    
-    @timer
+
+#    @cronometro
     def depositar(self, valor):
         """ Altera o saldo de acordo com o valor de depósito """
         if valor > 0:
-            self.saldo = float(self.saldo) + float(valor)
+            self.historico.append(f'Deposito: {valor}')
+            self._saldo = (float(self._saldo) + float(valor))
             return self.saldo
         else:
-            raise ErroQuantidade(valor, self)       # Não teria problema fornecer todas as informações da classe a outra classe?
+            raise ErroQuantidade(valor, self)
 
-    @timer
+#    @cronometro
     def saque(self, valor):
         """ Altera o saldo de acordo com o valor de saque """
         maximo = self.saldo
         if valor < 0:
             raise ErroQuantidade(valor, self)
         elif (valor < maximo):
+            self.historico.append(f'Saque: {valor}')
             self.saldo = float(maximo) - float(valor)
             return self.saldo
         else:
             raise ErroSaldo(self)
-        
+          
     @property
-    def obter_saldo(self):
+    def saldo(self):
         """ Exibe o saldo atual """
-        return self.saldo
+        return self._saldo
+    @saldo.setter
+    def saldo(self, novo_saldo):
+        self._saldo = novo_saldo  
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        self.limite = len(self.historico)
+        if self.indice >= self.limite:
+            raise StopIteration
+        else:
+            valor_retornado = self.historico[self.indice]
+            self.indice += 1
+            return valor_retornado
 
     @staticmethod
     def boas_vindas():
@@ -72,11 +99,11 @@ class Conta(metaclass=ABCMeta):
         """ Exibe o número total de contas criadas """
         return (f'O número de instâncias de \
 contas criadas é de {cls.quantidade_contas}')
-    
+
     @abstractmethod
     def __str__(self):
         """ Exibe as informações da instância de classe chamada """
-        return (f'Conta[{self._numero}] - {self._nome}\
+        return (f'Conta[{self.numero}] - {self.nome}\
 , saldo = R$  {self.saldo:.2f}')
     
     def __getattr__(self, attribute):
@@ -93,26 +120,34 @@ class ContaCorrente(Conta):
         super().__init__(numero, nome, saldo)
         self._limite = limite
     
+    @property
+    def limite(self):
+        return self._limite
+    @limite.setter
+    def limite(self, limite_restante):
+        self._limite = limite_restante
+    
     def __str__(self):
         """ Expande a funcionalidade de chamar uma instância de
             classe da superclasse, adicionando o valor do limite de crédito """
         return super().__str__() + f', seu limite de crédito\
  é R$ {self._limite:.2f}'
 
-    @timer
+#    @cronometro
     def saque(self, valor):
         """ Altera a funcionalidade do método saque da função parente,
             permitindo saques acima do saldo, mas limitando o saque 
             pela soma do saldo e limite """
-        maximo = self.saldo + self._limite
+        maximo = self.saldo + self.limite
         if valor < 0:
             raise ErroQuantidade(valor, self)
         elif valor < maximo:
-            self.saldo = float(self.saldo) - float(valor)
+            self.historico.append(f'Saque: {valor}')
+            self.saldo =(float(self.saldo) - float(valor))
             if self.saldo < 0:
-                self._limite = self._limite + self.saldo
-                self.saldo = 0.00
-            return self.saldo, self._limite
+                self.limite(self.limite + self.saldo)
+                Conta.saldo(0.00)
+            return self.saldo, self.limite
         else:
             raise ErroSaldo(self)
 
@@ -145,7 +180,7 @@ class ContaInvestimento(Conta):
             tipo de investimento """
         return super().__str__() + f', investimento é de \
 {self._tipo_investimento}'
-
+      
 class ErroQuantidade(Exception):
     """ Gera erro caso o valor de saque/depósito
         seja negativo. """

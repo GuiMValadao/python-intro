@@ -4,7 +4,7 @@ from timeit import default_timer
 from functools import wraps
 
 
-def timer(func):
+def cronometro(func):
     @wraps(func)
     def inner(self, *variables):
         start = default_timer()
