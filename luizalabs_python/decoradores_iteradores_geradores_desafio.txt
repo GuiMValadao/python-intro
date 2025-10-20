@@ -1,0 +1,13 @@
+- Decorador de log
+    Implementar decorar a ser aplicados a todas as funções
+    de transações(depósito, saque, criação de conta, etc.)
+    Deve registrar a data e hora de cada transação, junto com
+    o tipo de transação.
+- Gerador de relatórios
+    Criar um gerador que permita iterar sobre as transações de
+    uma conta e retornar, uma a uma, as transações que foram 
+    realizadas. Também deve filtrar as transações baseado no tipo.
+- Iterador personalizado
+    Implementar um iterador personalizado ContaIterador que
+    permita iterar sobre todas as contas do banco, retornando 
+    informações básicas de cada conta.
