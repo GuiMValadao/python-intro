@@ -23,14 +23,31 @@ class Pilha:
     def __str__(self):
         return "Pilha:" + str(self._lista)
 
+    def __iter__(self):
+        return iter(self._lista)
+
+
+def is_job(frase: str):
+    return frase.startswith("Job")
+
+
+def add_item(element: str):
+    return "item:" + element
+
 
 stack = Pilha()
-stack.push("T1")
-stack.push("T2")
-stack.push("T3")
+stack.push("Task1")
+stack.push("Task2")
+stack.push("Job1")
+stack.push("Task3")
+stack.push("Job2")
+stack.push("Job3")
 print("stack:", stack)
 print("stack.is_empty():", stack.is_empty())
 print("len(stack):", len(stack))
-print("stack.top():", stack.top())
-print("stack.pop():", stack.pop())
-print("stack:", stack)
+print("stack contents:", stack)
+nova_lista = list(map(add_item, stack))
+print("nova_lista:", nova_lista)
+
+lista_filtrada = list(filter(is_job, stack))
+print("lista_filtrada:", lista_filtrada)
