@@ -253,7 +253,7 @@
 #   * A classe wx.Dialog fornece duas versões do método show() para suportar
 #       diálogos modais e não-modais. O método ShowModal() é usado para exibir
 #       o primeiro, e Show() para exibir o segundo.
-# Assim como a classe genérica wx.Dialoh, a biblioteca wxPython fornece diversos
+# Assim como a classe genérica wx.Dialog, a biblioteca wxPython fornece diversos
 # diálogos pre-construídos para situações comuns. Eles incluem:
 #   * wx.ColourDialog: Para gerar um diálogo de escolha de cores.
 #   * wx.DirDialog: diálogo para escolha de pasta/diretório.
