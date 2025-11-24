@@ -5,6 +5,11 @@ name = "pypi"
 
 [packages]
 matplotlib = "*"
+pytest = "*"
+fastapi = "*"
+uvicorn = "*"
+sqlalchemy = "*"
+pydantic = "*"
 
 [dev-packages]
 ipykernel = "*"
