@@ -1,5 +1,5 @@
 from sqlalchemy import Integer, String
-from luizalabs_python.primeira_api_fastapi_pyhton_docker.workout_api.contrib.models import (
+from workout_api.contrib.models import (
     BaseModel,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship

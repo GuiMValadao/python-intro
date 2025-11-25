@@ -1,6 +1,6 @@
-from time import datetime
-from sqlalchemy import Datetime, ForeignKey, Integer, String, Float
-from luizalabs_python.primeira_api_fastapi_pyhton_docker.workout_api.contrib.models import (
+from datetime import datetime
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Float
+from workout_api.contrib.models import (
     BaseModel,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,12 +16,12 @@ class AtletaModel(BaseModel):
     peso: Mapped[float] = mapped_column(Float, nullable=False)
     altura: Mapped[float] = mapped_column(Float, nullable=False)
     sexo: Mapped[str] = mapped_column(String(1), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(Datetime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     categoria: Mapped["CategoriaModel"] = relationship(back_populates="atleta")
-    categoria_id = Mapped[str] = mapped_column(ForeignKey("categorias.pk_id"))
+    categoria_id: Mapped[str] = mapped_column(ForeignKey("categorias.pk_id"))
     centro_treinamento: Mapped["CentroTreinamentoModel"] = relationship(
         back_populates="atleta"
     )
-    centro_treinamento_id = Mapped[str] = mapped_column(
+    centro_treinamento_id: Mapped[str] = mapped_column(
         ForeignKey("centros_treinamento.pk_id")
     )

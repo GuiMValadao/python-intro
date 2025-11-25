@@ -1,12 +1,16 @@
 from typing import Annotated
-from pydantic import BaseModel, Field, PositiveFloat
+from pydantic import UUID4, BaseModel, Field, PositiveFloat
 
-from luizalabs_python.primeira_api_fastapi_pyhton_docker.workout_api.contrib.schemas import (
+from workout_api.contrib.schemas import (
     BaseSchema,
 )
 
 
-class Categoria(BaseSchema):
+class CategoriaIn(BaseSchema):
     nome: Annotated[
         str, Field(description="Nome da categoria", example="Scale", max_length=10)
     ]
+
+
+class CategoriaOut(CategoriaIn):
+    id: Annotated[UUID4, Field(description="Identificador de Categoria")]
