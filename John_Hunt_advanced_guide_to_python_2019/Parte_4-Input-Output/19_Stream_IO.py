@@ -120,7 +120,7 @@
 # binary_stream_from_file = io.BufferedReader(io.BytesIO(b'starship.png'))
 # bytes = binary_stream_from_file.read(4)
 # print(bytes)
-# Neste exemplo, os dados são lidos do objeto BytesUI pelo BufferedReader.
+# Neste exemplo, os dados são lidos do objeto BytesIO pelo BufferedReader.
 # O método read() é, então, usado para ler os primeiros 4 bytes, com a saída:
 # b'star'
 # Note que 'b' na frente da string e do resultado indica que o literal
