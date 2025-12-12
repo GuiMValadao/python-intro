@@ -31,7 +31,9 @@
 # e o método principal que lançará o jogo. O jogo também define três constantes globais
 # que serão usadas para definir a taxa de atualização de quadros e o tamanho da tela.
 import pygame, random
+from pathlib import Path
 
+ROOT_PATH = Path(__file__).parent
 FRAME_REFRESH_RATE = 30
 DISPLAY_WIDTH = 600
 DISPLAY_HEIGHT = 400
@@ -204,7 +206,7 @@ class Espaconave(ObjetoJogo):
         self.game = game
         self.x = DISPLAY_WIDTH / 2
         self.y = DISPLAY_HEIGHT - 40
-        self.load_image("starship.png")
+        self.load_image(ROOT_PATH / "starship.png")
 
     def move_direita(self):
         """Move a espaçonave para a direita na tela"""
@@ -267,7 +269,7 @@ class Meteoros(ObjetoJogo):
         self.x = random.randint(0, DISPLAY_WIDTH)
         self.y = INITIAL_METEOR_Y_LOCATION
         self.speed = random.randint(1, MAX_METEOR_SPEED)
-        self.load_image("meteor.png")
+        self.load_image(ROOT_PATH / "meteor.png")
 
     def move_baixo(self):
         self.y = self.y + self.speed
@@ -294,7 +296,7 @@ class Estrela(ObjetoJogo):
         self.x = 10
         self.y = random.randint(50, DISPLAY_WIDTH)
         self.speed = random.randint(3, MAX_METEOR_SPEED)
-        self.load_image("star.png")
+        self.load_image(ROOT_PATH / "star.png")
 
     def move_direita(self):
         """Move a espaçonave para a direita na tela"""
