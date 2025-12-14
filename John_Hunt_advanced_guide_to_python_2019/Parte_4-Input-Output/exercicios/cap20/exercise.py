@@ -1,4 +1,5 @@
 import csv
+from openpyxl import Workbook
 
 
 class Conta:
@@ -30,7 +31,7 @@ class Transacao:
 
 
 def salvar_transacoes_csv(conta):
-
+    """Exercício cap 20 - arquivos .csv"""
     with open("transacoes.csv", "a", newline="") as arquivocsv:
         escritor = csv.writer(arquivocsv)
         escritor.writerow(("tipo_transacao", "valor"))
@@ -38,8 +39,21 @@ def salvar_transacoes_csv(conta):
             escritor.writerow(transacao)
 
 
+def salvar_transacoes_excel(nome_arquivo, conta):
+    """Exercicio cap 21 - arquivos excel"""
+    workbook = Workbook()
+    ws = workbook.active
+    ws.title = "transacoes"
+    ws.sheet_properties.tabColor = "1072BA"
+    ws.append(["tipo de transacao", "valor"])
+    for transacao in conta.historico:
+        ws.append(transacao)
+    workbook.save(f"{nome_arquivo}.xlsx")
+
+
 conta = Conta(1, "Joao", 200, "corrente")
 conta.sacar(20)
 conta.depositar(50)
 print(conta.historico)
-salvar_transacoes_csv(conta)
+# salvar_transacoes_csv(conta)
+salvar_transacoes_excel("transacoes", conta)
