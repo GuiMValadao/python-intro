@@ -262,7 +262,7 @@
 # A função findall()
 # A função findall() retorna uma lista contendo todas as combinações. A assinatura
 # dessa função é:
-# re.findall(patter, string, flags=0)
+# re.findall(pattern, string, flags=0)
 # Ela retorna todas as combinações não-sobrepostas de pattern na string, como
 # uma lista de strings. A string é scanneada da esquerda para a direita, e combinações
 # são retornadas na sequência em que são encontradas. Se um ou mais grupos estão
@@ -287,7 +287,7 @@
 
 # A função finditer()
 # Esta função retorna um iterador fornecendo(yielding) objetos combinados para a
-# regex patter na string fornecida. A assinatura dessa função é:
+# regex pattern na string fornecida. A assinatura dessa função é:
 # re.finditer(pattern, string, flags=0)
 # A string é scanneada da esquerda para a direita, e combinações são retornadas na
 # ordem encontradas. Combinações vazias são incluídas no resultado. Flags podem ser
