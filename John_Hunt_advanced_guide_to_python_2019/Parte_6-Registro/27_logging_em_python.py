@@ -169,7 +169,7 @@
 # A maioria dos módulos não usará o logger root para registrar informações,
 # mas usará um logger nomeado(named) ou de nível módulo(module level).
 # Tais loggers podem ser configurados independentemente do logger root.
-# Isto permitem que os desenvolvedores ativem o registro apenas para um
+# Isto permite que os desenvolvedores ativem o registro apenas para um
 # módulo em vez de para a aplicação inteira. Isto pode ser útil se um
 # desenvolvedor quer investigar um problema que está localizado dentro de um
 # único módulo. Exemplos de código anteriores neste capítulo usaram a função
@@ -182,7 +182,7 @@
 # uma string com o nome para o método getLogger():
 # logger1 = logging.getLogger('meu logger')
 # Isto retorna um objeto logger com o nome 'meu logger'. Note que isto pode
-# ser um objeto logger novo, mas se qualquer outro código dentro od sistema atual
+# ser um objeto logger novo, mas se qualquer outro código dentro do sistema atual
 # requisitou anteriormente um logger chamado 'meu logger', então aquele objeto
 # será retornado no código atual. Assim, múltiplas chamadas a getLogger() com
 # o mesmo nome sempre retornarão uma referência ao mesmo objeto Logger.
