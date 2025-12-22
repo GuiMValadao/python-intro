@@ -142,7 +142,8 @@ class Game:
 
             if self._checar_colisao():
                 espaconave_colidiu = True
-                self._display_message("Colisão: Fom de jogo!")
+                self._display_message("Colisão: Fim de jogo!")
+                break
             if cycle_count == MAX_NUMBER_OF_CYCLES:
                 print("WINNER!")
                 self._display_message("Vencedor!")
