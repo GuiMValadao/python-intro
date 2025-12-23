@@ -1,0 +1,7 @@
+22-12-2025 05:32:23 PM [INFO] __main__.<module>: Iniciando
+22-12-2025 05:32:23 PM [DEBUG] __main__.faz_alguma_coisa: mensagem debug
+22-12-2025 05:32:23 PM [INFO] __main__.faz_alguma_coisa: mensagem info
+22-12-2025 05:32:23 PM [WARNING] __main__.faz_alguma_coisa: mensagem aviso
+22-12-2025 05:32:23 PM [ERROR] __main__.faz_alguma_coisa: mensagem erro
+22-12-2025 05:32:23 PM [CRITICAL] __main__.faz_alguma_coisa: mensagem critica
+22-12-2025 05:32:23 PM [INFO] __main__.<module>: Terminado
