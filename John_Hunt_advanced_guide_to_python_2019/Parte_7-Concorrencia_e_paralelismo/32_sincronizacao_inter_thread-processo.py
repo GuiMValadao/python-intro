@@ -129,7 +129,7 @@
 # de seu comportamento. O objeto Barrier mostrado acima é um modo de nível relativamente
 # alto para fazer isso; entretanto, em alguns casos precisa-se de um controle mais refinado.
 # As classes threading.Event ou multiprocessing.Event podem ser usadas para isso.
-# Um Event gerencia uma flag interna que chama ou ser() ou clear(). Outras threads
+# Um Event gerencia uma flag interna que chama ou set() ou clear(). Outras threads
 # podem esperar (método wait()) para a flag ser definida (set()), efetivamente
 # bloquando seu próprio progresso até permitida continuar pelo Event. A flag interna
 # é inicialmente definida como False, que garante que se uma tarefa receber o
