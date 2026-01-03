@@ -1,2 +1,3 @@
-print(524288 / 16)
-print(32768 / 16)
+from datetime import datetime
+
+print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
