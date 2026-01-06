@@ -31,16 +31,10 @@ class Transacao:
 
 
 def preencher_tabelas_contas(conta):
-
-    declaracao = (
-        "INSERT INTO info_contas (id_info_contas, nome) VALUES ("
-        + str(conta.numero)
-        + ", '"
-        + conta.nome
-        + "')"
-    )
+    dados = (conta.numero, conta.nome)
+    declaracao = "INSERT INTO info_contas (id_info_contas, nome) VALUES (?, ?)"
     try:
-        cursor.execute(declaracao)
+        cursor.execute(declaracao, dados)
         connection.commit()
     except pymysql.err.IntegrityError:
         print("Conta já registrada.")
@@ -57,19 +51,10 @@ def preencher_tabelas_transacoes(conta):
 
     for item in conta.historico:
         indice = obter_indice()
-        declaracao = (
-            "INSERT INTO transacoes (id_transacoes, tipo, valor, conta) VALUES ("
-            + str(indice + 1)
-            + ", '"
-            + item[0]
-            + "', "
-            + str(item[1])
-            + ", "
-            + str(conta.numero)
-            + ")"
-        )
+        dados = (str(indice + 1), item[0], str(item[1]), str(conta.numero))
+        declaracao = "INSERT INTO transacoes (id_transacoes, tipo, valor, conta) VALUES (?, ?, ?, ?)"
         try:
-            cursor.execute(declaracao)
+            cursor.execute(declaracao, dados)
             connection.commit()
         except pymysql.err.IntegrityError:
             print("ID transação já registrado")

@@ -1,3 +1,4 @@
-from datetime import datetime
+import sqlite3
 
-print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
+conexao = sqlite3.connect("clientes.db")
+print(conexao)
