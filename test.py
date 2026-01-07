@@ -1,4 +1,9 @@
-import sqlite3
+from datetime import datetime
 
-conexao = sqlite3.connect("clientes.db")
-print(conexao)
+opcoes = {
+    "DATE": datetime.now().strftime("%d/%m/%Y"),
+    "TIME": datetime.now().strftime("%H:%M:%S"),
+    "DATE AND TIME": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+}
+
+print(opcoes["DATE AND TIME"])
