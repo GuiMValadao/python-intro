@@ -5,3 +5,5 @@
 \.vscode
 \workbook2014
 \__pycache__
+\.pytest_cache
+\.github

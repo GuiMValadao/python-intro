@@ -110,21 +110,31 @@ class Game:
         espaconave_colidiu = False
         cycle_count = 0
         while esta_executando and not espaconave_colidiu:
+            # espaconave Movement block
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RIGHT]:
+                self.espaconave.move_direita()
+            elif keys[pygame.K_LEFT]:
+                self.espaconave.move_esquerda()
+            elif keys[pygame.K_UP]:
+                self.espaconave.move_cima()
+            elif keys[pygame.K_DOWN]:
+                self.espaconave.move_baixo()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     esta_executando = False
                 elif event.type == pygame.KEYDOWN:
-                    # Checa qual tecla foi pressionada
-                    if event.key == pygame.K_RIGHT:
-                        # Tecla direita foi pressionada; move para direita
-                        self.espaconave.move_direita()
-                    elif event.key == pygame.K_LEFT:
-                        self.espaconave.move_esquerda()
-                    elif event.key == pygame.K_UP:
-                        self.espaconave.move_cima()
-                    elif event.key == pygame.K_DOWN:
-                        self.espaconave.move_baixo()
-                    elif event.key == pygame.K_q:
+                    # # Checa qual tecla foi pressionada
+                    # if event.key == pygame.K_RIGHT:
+                    #     # Tecla direita foi pressionada; move para direita
+                    #     self.espaconave.move_direita()
+                    # elif event.key == pygame.K_LEFT:
+                    #     self.espaconave.move_esquerda()
+                    # elif event.key == pygame.K_UP:
+                    #     self.espaconave.move_cima()
+                    # elif event.key == pygame.K_DOWN:
+                    #     self.espaconave.move_baixo()
+                    if event.key == pygame.K_q:
                         esta_executando = False
                     elif event.key == pygame.K_p:
                         self._pause()
