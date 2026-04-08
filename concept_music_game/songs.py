@@ -144,6 +144,7 @@ SONG_3 = [
     (2000, pygame.K_j),
 ]
 
+
 # Dictionary of available songs
 SONGS = {
     "song1": SONG_1,
