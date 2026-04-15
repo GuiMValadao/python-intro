@@ -1,15 +1,9 @@
 import pygame
 import config
-from enum import Enum
+from config import GameState
 from entities import Player
 from events import BattleEvent, load_sound
-
-
-class GameState(Enum):
-    MENU = "menu"
-    OPTIONS = "options"
-    PLAY = "play"
-    VICTORY = "victory"
+from menu import MainMenu, OptionsMenu, PauseMenu
 
 
 class Game:
@@ -43,20 +37,29 @@ class Game:
         self.current_state = GameState.MENU
         self.battle_event = None
 
-        # Load sounds for note keys
-        key_names = {
-            pygame.K_a: "a",
-            pygame.K_s: "s",
-            pygame.K_d: "d",
-            pygame.K_f: "f",
-            pygame.K_g: "g",
-            pygame.K_h: "h",
-            pygame.K_j: "j",
-        }
+        # Load sounds for note keys using key bindings from config
         self.note_sounds = {
-            key: load_sound(key_names[key], freq)
+            key: load_sound(config.KEY_BINDINGS[key], freq)
             for key, freq in config.NOTE_FREQUENCIES.items()
         }
+
+        # Initialize menus
+        self.main_menu = MainMenu(self)
+        self.options_menu = OptionsMenu(self)
+        self.pause_menu = PauseMenu(self)
+
+    def reset_game(self):
+        """Reset all game entities to their initial state without recreating pygame."""
+        # Reset player
+        self.player = Player(self)
+
+        # Reset battle event
+        self.battle_event = None
+
+        # Recreate menus to reset their state
+        self.main_menu = MainMenu(self)
+        self.options_menu = OptionsMenu(self)
+        self.pause_menu = PauseMenu(self)
 
     def run(self):
         """Main game loop using state management."""
@@ -79,16 +82,28 @@ class Game:
     def set_state(self, new_state):
         """Transition to a new game state."""
         self.current_state = new_state
-        # Don't auto-create battle_event - let the B key handle it
+
         if new_state == GameState.MENU:
-            self.battle_event = None
+            # Reset all game state when returning to menu
+            self.reset_game()
+        elif new_state == GameState.OPTIONS:
+            # Reset options menu selection
+            self.options_menu.selected_index = 0
+            self.options_menu.hovered_button = None
+        elif new_state == GameState.PAUSE:
+            # Reset pause menu selection
+            self.pause_menu.selected_index = 0
+            self.pause_menu.hovered_button = None
         elif new_state == GameState.VICTORY:
             pass  # Keep the battle_event for display
 
     def handle_input(self, event):
         """Centralized input handling based on current state."""
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_q:
+            if event.key == pygame.K_q and (
+                self.current_state == GameState.MENU
+                or self.current_state == GameState.VICTORY
+            ):
                 return False  # Quit game
 
             if self.current_state == GameState.MENU:
@@ -97,6 +112,8 @@ class Game:
                 return self.handle_options_input(event)
             elif self.current_state == GameState.PLAY:
                 return self.handle_play_input(event)
+            elif self.current_state == GameState.PAUSE:
+                return self.handle_pause_input(event)
             elif self.current_state == GameState.VICTORY:
                 return self.handle_victory_input(event)
 
@@ -105,29 +122,42 @@ class Game:
                 return self.handle_menu_click(event)
             elif self.current_state == GameState.OPTIONS:
                 return self.handle_options_click(event)
+            elif self.current_state == GameState.PAUSE:
+                return self.handle_pause_click(event)
+
+        elif event.type == pygame.MOUSEMOTION:
+            return self.handle_mouse_motion(event)
 
         return True
 
     def handle_menu_input(self, event):
         """Handle menu keyboard input."""
-        return True
+        return self.main_menu.handle_key_press(event)
 
     def handle_menu_click(self, event):
         """Handle menu mouse input."""
-        return True
+        return self.main_menu.handle_click(event)
 
     def handle_options_input(self, event):
         """Handle options keyboard input."""
-        return True
+        return self.options_menu.handle_key_press(event)
 
     def handle_options_click(self, event):
         """Handle options mouse input."""
-        return True
+        return self.options_menu.handle_click(event)
+
+    def handle_pause_input(self, event):
+        """Handle pause menu keyboard input."""
+        return self.pause_menu.handle_key_press(event)
+
+    def handle_pause_click(self, event):
+        """Handle pause menu mouse input."""
+        return self.pause_menu.handle_click(event)
 
     def handle_play_input(self, event):
         """Handle play keyboard input."""
         if event.key == pygame.K_p:
-            self._pause()
+            self.set_state(GameState.PAUSE)
         elif event.key == pygame.K_m:
             self.set_state(GameState.MENU)
         elif event.key == pygame.K_b:
@@ -169,7 +199,8 @@ class Game:
                 if self.battle_event.song_finished:
                     self.set_state(GameState.VICTORY)
 
-        self.player.move()
+            # Only move player when actually playing (not paused)
+            self.player.move()
 
     def draw(self):
         """Draw based on current state."""
@@ -179,18 +210,18 @@ class Game:
             self.draw_options()
         elif self.current_state == GameState.PLAY:
             self.draw_play()
+        elif self.current_state == GameState.PAUSE:
+            self.draw_pause()
         elif self.current_state == GameState.VICTORY:
             self.draw_victory()
 
     def draw_menu(self):
         """Draw menu screen."""
-        # Delegating to existing menu rendering logic
-        # This will be called during draw loop
-        pass
+        self.main_menu.draw(self.display_surface)
 
     def draw_options(self):
         """Draw options screen."""
-        pass
+        self.options_menu.draw(self.display_surface)
 
     def draw_play(self):
         """Draw play screen."""
@@ -228,196 +259,31 @@ class Game:
             ),
         )
 
+    def draw_pause(self):
+        """Draw pause menu over the game."""
+        # First draw the game in background
+        self.display_surface.blit(self.BACKGROUND, (0, 0))
+        self.player.draw()
+        if self.battle_event:
+            self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
+            self.battle_event.draw()
+
+        # Then draw pause menu on top
+        self.pause_menu.draw(self.display_surface)
+
+    def handle_mouse_motion(self, event):
+        """Handle mouse motion for menu hover effects."""
+        if self.current_state == GameState.MENU:
+            self.main_menu.handle_mouse_motion(event)
+        elif self.current_state == GameState.OPTIONS:
+            self.options_menu.handle_mouse_motion(event)
+        elif self.current_state == GameState.PAUSE:
+            self.pause_menu.handle_mouse_motion(event)
+        return True
+
     def _pause(self):
-        paused = True
-        while paused:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_p:
-                        paused = False
-                        break
-
-    def menu(self):
-        # Create and cache button surfaces
-        button_width, button_height = 200, 60
-        start_surf = pygame.Surface((button_width, button_height))
-        options_surf = pygame.Surface((button_width, button_height))
-        quit_surf = pygame.Surface((button_width, button_height))
-        start_surf.fill((0, 0, 255))  # Blue
-        options_surf.fill((0, 255, 0))  # Green
-        quit_surf.fill((255, 0, 0))  # Red
-
-        # Render text
-        start_text = self.game_font.render("Start", True, (255, 255, 255))
-        options_text = self.game_font.render("Options", True, (255, 255, 255))
-        quit_text = self.game_font.render("Quit", True, (255, 255, 255))
-
-        # Blit text onto surfaces
-        start_surf.blit(
-            start_text,
-            (
-                (button_width - start_text.get_width()) // 2,
-                (button_height - start_text.get_height()) // 2,
-            ),
-        )
-        options_surf.blit(
-            options_text,
-            (
-                (button_width - options_text.get_width()) // 2,
-                (button_height - options_text.get_height()) // 2,
-            ),
-        )
-        quit_surf.blit(
-            quit_text,
-            (
-                (button_width - quit_text.get_width()) // 2,
-                (button_height - quit_text.get_height()) // 2,
-            ),
-        )
-
-        # Button positions
-        self.menu_start_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4,
-            button_width,
-            button_height,
-        )
-        self.menu_options_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4 + 80,
-            button_width,
-            button_height,
-        )
-        self.menu_quit_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4 + 160,
-            button_width,
-            button_height,
-        )
-
-        self.menu_surfaces = {
-            "start": (start_surf, self.menu_start_rect),
-            "options": (options_surf, self.menu_options_rect),
-            "quit": (quit_surf, self.menu_quit_rect),
-        }
-
-    def handle_menu_click(self, event):
-        """Handle menu button clicks."""
-        if self.menu_start_rect.collidepoint(event.pos):
-            self.set_state(GameState.PLAY)
-        elif self.menu_options_rect.collidepoint(event.pos):
-            self.options_menu()
-            self.set_state(GameState.OPTIONS)
-        elif self.menu_quit_rect.collidepoint(event.pos):
-            return False
-        return True
-
-    def options_menu(self):
-        # Create and cache button surfaces
-        button_width, button_height = 200, 60
-        easy_surf = pygame.Surface((button_width, button_height))
-        medium_surf = pygame.Surface((button_width, button_height))
-        hard_surf = pygame.Surface((button_width, button_height))
-        back_surf = pygame.Surface((button_width, button_height))
-        easy_surf.fill((0, 255, 0))  # Green
-        medium_surf.fill((255, 255, 0))  # Yellow
-        hard_surf.fill((255, 0, 0))  # Red
-        back_surf.fill((128, 128, 128))  # Gray
-
-        # Render text
-        easy_text = self.game_font.render("Easy", True, (0, 0, 0))
-        medium_text = self.game_font.render("Medium", True, (0, 0, 0))
-        hard_text = self.game_font.render("Hard", True, (0, 0, 0))
-        back_text = self.game_font.render("Back", True, (0, 0, 0))
-
-        # Blit text
-        easy_surf.blit(
-            easy_text,
-            (
-                (button_width - easy_text.get_width()) // 2,
-                (button_height - easy_text.get_height()) // 2,
-            ),
-        )
-        medium_surf.blit(
-            medium_text,
-            (
-                (button_width - medium_text.get_width()) // 2,
-                (button_height - medium_text.get_height()) // 2,
-            ),
-        )
-        hard_surf.blit(
-            hard_text,
-            (
-                (button_width - hard_text.get_width()) // 2,
-                (button_height - hard_text.get_height()) // 2,
-            ),
-        )
-        back_surf.blit(
-            back_text,
-            (
-                (button_width - back_text.get_width()) // 2,
-                (button_height - back_text.get_height()) // 2,
-            ),
-        )
-
-        # Button positions
-        self.options_easy_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4,
-            button_width,
-            button_height,
-        )
-        self.options_medium_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4 + 80,
-            button_width,
-            button_height,
-        )
-        self.options_hard_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4 + 160,
-            button_width,
-            button_height,
-        )
-        self.options_back_rect = pygame.Rect(
-            config.DISPLAY_WIDTH // 2 - button_width // 2,
-            config.DISPLAY_HEIGHT // 4 + 240,
-            button_width,
-            button_height,
-        )
-
-        self.options_surfaces = {
-            "easy": (easy_surf, self.options_easy_rect),
-            "medium": (medium_surf, self.options_medium_rect),
-            "hard": (hard_surf, self.options_hard_rect),
-            "back": (back_surf, self.options_back_rect),
-        }
-
-    def handle_options_click(self, event):
-        """Handle options menu button clicks."""
-        if self.options_easy_rect.collidepoint(event.pos):
-            config.DIFFICULTY = "Easy"
-        elif self.options_medium_rect.collidepoint(event.pos):
-            config.DIFFICULTY = "Medium"
-        elif self.options_hard_rect.collidepoint(event.pos):
-            config.DIFFICULTY = "Hard"
-        elif self.options_back_rect.collidepoint(event.pos):
-            self.set_state(GameState.MENU)
-        return True
-
-    def draw_menu(self):
-        """Draw the menu screen."""
-        self.display_surface.fill(config.MENU_BACKGROUND)
-        if hasattr(self, "menu_surfaces"):
-            for surface, rect in self.menu_surfaces.values():
-                self.display_surface.blit(surface, rect.topleft)
-
-    def draw_options(self):
-        """Draw the options screen."""
-        self.display_surface.fill(config.MENU_BACKGROUND)
-        if hasattr(self, "options_surfaces"):
-            for surface, rect in self.options_surfaces.values():
-                self.display_surface.blit(surface, rect.topleft)
+        """Legacy pause method - now handled by PAUSE state."""
+        pass
 
 
 def main():
@@ -425,9 +291,6 @@ def main():
     print("Iniciando o jogo")
 
     game = Game()
-    # Initialize menu UI
-    game.menu()
-    game.options_menu()
     # Run the main game loop
     game.run()
     print("Fim de jogo")
