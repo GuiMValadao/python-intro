@@ -24,28 +24,138 @@ PLAYER_SPEED = 5
 SPAWN_MIN = 10
 SPAWN_MAX = 120
 DIFFICULTY = "Medium"  # Default difficulty
-NUMBER_BUTTONS = 5  # Default number of buttons
 CURRENT_SONG = "song2"  # variable to change the song to play
 
 # Key bindings - maps pygame keys to note names
 # Can be easily remapped for different key layouts
-KEY_BINDINGS = {
-    pygame.K_a: "a",  # A3
-    pygame.K_s: "s",  # B3
-    pygame.K_d: "d",  # C4
-    pygame.K_f: "f",  # D4
-    pygame.K_g: "g",  # E4
-    pygame.K_h: "h",  # F4
-    pygame.K_j: "j",  # G4
+NOTES_TO_KEYS = {
+    "A": pygame.K_a,
+    "B": pygame.K_s,
+    "C": pygame.K_d,
+    "D": pygame.K_f,
+    "E": pygame.K_g,
+    "F": pygame.K_h,
+    "G": pygame.K_j,
 }
 
-# Musical note frequencies (Hz)
-NOTE_FREQUENCIES = {
-    pygame.K_a: 220,  # A3
-    pygame.K_s: 247,  # B3
-    pygame.K_d: 262,  # C4
-    pygame.K_f: 294,  # D4
-    pygame.K_g: 330,  # E4
-    pygame.K_h: 349,  # F4
-    pygame.K_j: 392,  # G4
+NOTE_NAMES = {
+    NOTES_TO_KEYS["A"]: "A2",  # A2
+    NOTES_TO_KEYS["B"]: "B2",  # B2
+    NOTES_TO_KEYS["C"]: "C3",  # C3
+    NOTES_TO_KEYS["D"]: "D3",  # D3
+    NOTES_TO_KEYS["E"]: "E3",  # E3
+    NOTES_TO_KEYS["F"]: "F3",  # F3
+    NOTES_TO_KEYS["G"]: "G3",  # G3
 }
+
+# Extended note names for songs - includes sharps and flats
+# Format: "NOTE#" for sharps, "NOTEb" for flats
+EXTENDED_NOTE_NAMES = {
+    # Natural notes
+    "A2": NOTES_TO_KEYS["A"],
+    "B2": NOTES_TO_KEYS["B"],
+    "C3": NOTES_TO_KEYS["C"],
+    "D3": NOTES_TO_KEYS["D"],
+    "E3": NOTES_TO_KEYS["E"],
+    "F3": NOTES_TO_KEYS["F"],
+    "G3": NOTES_TO_KEYS["G"],
+    # Sharps
+    "A2#": (NOTES_TO_KEYS["A"], pygame.KMOD_SHIFT),
+    "B2#": (NOTES_TO_KEYS["B"], pygame.KMOD_SHIFT),
+    "C3#": (NOTES_TO_KEYS["C"], pygame.KMOD_SHIFT),
+    "D3#": (NOTES_TO_KEYS["D"], pygame.KMOD_SHIFT),
+    "E3#": (NOTES_TO_KEYS["E"], pygame.KMOD_SHIFT),
+    "F3#": (NOTES_TO_KEYS["F"], pygame.KMOD_SHIFT),
+    "G3#": (NOTES_TO_KEYS["G"], pygame.KMOD_SHIFT),
+    # Flats
+    "A2b": (NOTES_TO_KEYS["A"], pygame.KMOD_CTRL),
+    "B2b": (NOTES_TO_KEYS["B"], pygame.KMOD_CTRL),
+    "C3b": (NOTES_TO_KEYS["C"], pygame.KMOD_CTRL),
+    "D3b": (NOTES_TO_KEYS["D"], pygame.KMOD_CTRL),
+    "E3b": (NOTES_TO_KEYS["E"], pygame.KMOD_CTRL),
+    "F3b": (NOTES_TO_KEYS["F"], pygame.KMOD_CTRL),
+    "G3b": (NOTES_TO_KEYS["G"], pygame.KMOD_CTRL),
+}
+
+# Deprecated - use NOTE_NAMES instead
+KEY_BINDINGS = NOTE_NAMES
+
+# Enharmonic equivalents for saving space on acoustic guitar samples
+# Maps flat notes to their enharmonic sharp equivalents (same pitch, different names)
+# This avoids needing separate files for Cb=B, Db=C#, Eb=D#, Fb=E, Gb=F#, etc.
+ENHARMONIC_EQUIVALENTS = {
+    "A2b": "G3#",  # Ab → G#
+    "B2b": "A2#",  # Bb → A#
+    "B2#": "C3",  # B# → C
+    "C3b": "B2",  # Cb → B
+    "D3b": "C3#",  # Db → C#
+    "E3b": "D3#",  # Eb → D#
+    "F3b": "E3",  # Fb → E
+    "G3b": "F3#",  # Gb → F#
+}
+
+
+def get_sound_file_name(note_name):
+    """
+    Get the actual sound file name, resolving enharmonic equivalents.
+
+    Args:
+        note_name: Note name like "A2", "A2#", "A2b"
+
+    Returns:
+        str: Actual note name to use for the sound file
+    """
+    return ENHARMONIC_EQUIVALENTS.get(note_name, note_name)
+
+
+# Musical note frequencies (Hz) - natural notes only
+# Sharps and flats are calculated using semitone ratio
+_SEMITONE_RATIO = 2 ** (1 / 12)  # Equal temperament semitone ratio
+
+# Natural note frequencies
+_NATURAL_FREQUENCIES = {
+    NOTES_TO_KEYS["A"]: 110,  # A2
+    NOTES_TO_KEYS["B"]: 123,  # B2
+    NOTES_TO_KEYS["C"]: 131,  # C3
+    NOTES_TO_KEYS["D"]: 147,  # D3
+    NOTES_TO_KEYS["E"]: 165,  # E3
+    NOTES_TO_KEYS["F"]: 175,  # F3
+    NOTES_TO_KEYS["G"]: 196,  # G3
+}
+
+# Sharp frequencies (up one semitone) - accessed with SHIFT modifier
+_SHARP_FREQUENCIES = {
+    k: int(v * _SEMITONE_RATIO) for k, v in _NATURAL_FREQUENCIES.items()
+}
+
+# Flat frequencies (down one semitone) - accessed with CTRL modifier
+_FLAT_FREQUENCIES = {
+    k: int(v / _SEMITONE_RATIO) for k, v in _NATURAL_FREQUENCIES.items()
+}
+
+# Keep original NOTE_FREQUENCIES for backward compatibility
+NOTE_FREQUENCIES = _NATURAL_FREQUENCIES.copy()
+
+
+def get_note_frequency(key, modifier=0):
+    """
+    Get frequency for a key with optional modifier.
+
+    Args:
+        key: pygame key constant (e.g., pygame.K_a)
+        modifier: pygame key modifier (0, pygame.KMOD_SHIFT, or pygame.KMOD_CTRL)
+
+    Returns:
+        int: Frequency in Hz, or None if key not found
+    """
+    if modifier & pygame.KMOD_SHIFT:
+        return _SHARP_FREQUENCIES.get(key)
+    elif modifier & pygame.KMOD_CTRL:
+        return _FLAT_FREQUENCIES.get(key)
+    else:
+        return _NATURAL_FREQUENCIES.get(key)
+
+
+def get_all_playable_keys():
+    """Return all keys that can be played (natural notes)."""
+    return list(NOTES_TO_KEYS.values())

@@ -5,9 +5,15 @@ import config
 from songs import SONGS
 
 
-def load_sound(key_name, frequency, duration=0.5, sample_rate=22050):
-    """Load a sound file for the given key, or generate it if file doesn't exist."""
-    sound_file = config.ROOT_PATH / "sounds" / f"note_{key_name}.wav"
+def load_sound(key_name, frequency, duration=0.7, sample_rate=22050):
+    """
+    Load a sound file for the given key, or generate it if file doesn't exist.
+    Uses enharmonic equivalents for flat notes to save space (e.g., Db uses C# file).
+    """
+    # Resolve enharmonic equivalents (e.g., "A2b" → "G3#")
+    actual_note_name = config.get_sound_file_name(key_name)
+    print(actual_note_name)
+    sound_file = config.ROOT_PATH / "sounds" / f"note_{actual_note_name}.wav"
     try:
         return pygame.mixer.Sound(str(sound_file))
     except (pygame.error, FileNotFoundError):
@@ -15,7 +21,7 @@ def load_sound(key_name, frequency, duration=0.5, sample_rate=22050):
         return generate_sound(frequency, duration, sample_rate)
 
 
-def generate_sound(frequency, duration=0.5, sample_rate=22050):
+def generate_sound(frequency, duration=0.7, sample_rate=22050):
     """Generate a sine wave sound for a given frequency."""
     frames = int(duration * sample_rate)
     arr = np.sin(2.0 * np.pi * frequency * np.linspace(0, duration, frames))
@@ -61,27 +67,49 @@ class BattleEvent:
         self.score = 0
         self.previous_keys = pygame.key.get_pressed()
         # Load sounds for each button (try files first, fallback to generated)
-        key_names = {
-            pygame.K_a: "a",
-            pygame.K_s: "s",
-            pygame.K_d: "d",
-            pygame.K_f: "f",
-            pygame.K_g: "g",
-            pygame.K_h: "h",
-            pygame.K_j: "j",
-        }
-        self.sounds = {
-            key: load_sound(key_names[key], freq)
-            for key, freq in config.NOTE_FREQUENCIES.items()
-        }
+        # Includes natural notes, sharps (with SHIFT), and flats (with CTRL)
+        self.sounds = {}
+        for key in config.get_all_playable_keys():
+            note_name = config.NOTE_NAMES[key]
+            # Natural note
+            freq = config.get_note_frequency(key, 0)
+            if freq:
+                self.sounds[(key, 0)] = load_sound(note_name, freq)
+            # Sharp (SHIFT modifier)
+            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
+            if freq_sharp:
+                self.sounds[(key, pygame.KMOD_SHIFT)] = load_sound(
+                    note_name + "#", freq_sharp
+                )
+            # Flat (CTRL modifier)
+            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
+            if freq_flat:
+                self.sounds[(key, pygame.KMOD_CTRL)] = load_sound(
+                    note_name + "b", freq_flat
+                )
         # Generate distorted sounds for missed attempts
-        self.distorted_sounds = {
-            key: generate_distorted_sound(freq)
-            for key, freq in config.NOTE_FREQUENCIES.items()
-        }
+        self.distorted_sounds = {}
+        for key in config.get_all_playable_keys():
+            # Natural note
+            freq = config.get_note_frequency(key, 0)
+            if freq:
+                self.distorted_sounds[(key, 0)] = generate_distorted_sound(freq)
+            # Sharp
+            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
+            if freq_sharp:
+                self.distorted_sounds[(key, pygame.KMOD_SHIFT)] = (
+                    generate_distorted_sound(freq_sharp)
+                )
+            # Flat
+            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
+            if freq_flat:
+                self.distorted_sounds[(key, pygame.KMOD_CTRL)] = (
+                    generate_distorted_sound(freq_flat)
+                )
         # Track button states: {key: {'lit': False, 'time': 0}}
+        # Only track natural note buttons (sharps/flats share same button)
         self.button_states = {
-            key: {"lit": False, "time": 0} for key in config.NOTE_FREQUENCIES.keys()
+            key: {"lit": False, "time": 0} for key in config.get_all_playable_keys()
         }
         # Load and process song based on config.DIFFICULTY
         raw_song = SONGS[config.CURRENT_SONG]
@@ -130,10 +158,12 @@ class BattleEvent:
             and self.spawn_timer >= self.song[self.song_index][0]
         ):
             frame_time, note_key = self.song[self.song_index]
+            # Extract base key if note_key is a tuple (for sharps/flats)
+            base_key = note_key[0] if isinstance(note_key, tuple) else note_key
             # Find the button for this note
             target_button = None
             for button in self.staff.buttons:
-                if button.key == note_key:
+                if button.key == base_key:
                     target_button = button
                     break
             if target_button:
@@ -148,7 +178,7 @@ class BattleEvent:
                     state["lit"] = False
 
         # Check for key presses (detect both successful and missed inputs)
-        for key in config.NOTE_FREQUENCIES.keys():
+        for key in config.get_all_playable_keys():
             if current_keys[key] and not self.previous_keys[key]:
                 # Key was just pressed
                 # Check if there's a collision
@@ -160,8 +190,8 @@ class BattleEvent:
 
                 if not has_collision:
                     # Missed input - play distorted sound and button stays normal
-                    if key in self.distorted_sounds:
-                        self.distorted_sounds[key].play()
+                    if (key, 0) in self.distorted_sounds:
+                        self.distorted_sounds[(key, 0)].play()
 
         for block in self.moving_blocks[:]:
             block.update()
@@ -171,14 +201,22 @@ class BattleEvent:
                     and not self.previous_keys[block.target.key]
                 ):
                     self.score += 1
-                    # Play the corresponding note
-                    if block.target.key in self.sounds:
-                        self.sounds[block.target.key].play()
-                    # Light up the button on successful hit
-                    self.button_states[block.target.key]["lit"] = True
-                    self.button_states[block.target.key][
-                        "time"
-                    ] = 10  # Display for 10 frames
+                    # Play the corresponding note (handle both natural and accidental keys)
+                    sound_key = (
+                        block.target.key
+                        if isinstance(block.target.key, tuple)
+                        else (block.target.key, 0)
+                    )
+                    if sound_key in self.sounds:
+                        self.sounds[sound_key].play()
+                    # Light up the button on successful hit (use base key for button state)
+                    base_key = (
+                        block.target.key[0]
+                        if isinstance(block.target.key, tuple)
+                        else block.target.key
+                    )
+                    self.button_states[base_key]["lit"] = True
+                    self.button_states[base_key]["time"] = 10  # Display for 10 frames
                     self.moving_blocks.remove(block)
             elif block.position.x < 0:
                 self.moving_blocks.remove(block)

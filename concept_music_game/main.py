@@ -38,10 +38,26 @@ class Game:
         self.battle_event = None
 
         # Load sounds for note keys using key bindings from config
-        self.note_sounds = {
-            key: load_sound(config.KEY_BINDINGS[key], freq)
-            for key, freq in config.NOTE_FREQUENCIES.items()
-        }
+        # Includes natural notes, sharps (SHIFT+key), and flats (CTRL+key)
+        self.note_sounds = {}
+        for key in config.get_all_playable_keys():
+            note_name = config.NOTE_NAMES[key]
+            # Natural note
+            freq = config.get_note_frequency(key, 0)
+            if freq:
+                self.note_sounds[(key, 0)] = load_sound(note_name, freq)
+            # Sharp (SHIFT modifier)
+            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
+            if freq_sharp:
+                self.note_sounds[(key, pygame.KMOD_SHIFT)] = load_sound(
+                    note_name + "#", freq_sharp
+                )
+            # Flat (CTRL modifier)
+            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
+            if freq_flat:
+                self.note_sounds[(key, pygame.KMOD_CTRL)] = load_sound(
+                    note_name + "b", freq_flat
+                )
 
         # Initialize menus
         self.main_menu = MainMenu(self)
@@ -165,8 +181,12 @@ class Game:
                 self.battle_event = BattleEvent(self)
             else:
                 self.battle_event = None
-        elif event.key in config.NOTE_FREQUENCIES:
-            self.note_sounds[event.key].play()
+        elif event.key in config.get_all_playable_keys():
+            # Extract modifier (SHIFT or CTRL for accidentals)
+            modifier = event.mod & (pygame.KMOD_SHIFT | pygame.KMOD_CTRL)
+            sound_key = (event.key, modifier)
+            if sound_key in self.note_sounds:
+                self.note_sounds[sound_key].play()
         return True
 
     def handle_victory_input(self, event):
