@@ -58,7 +58,7 @@ class Game:
                 self.note_sounds[(key, pygame.KMOD_CTRL)] = load_sound(
                     note_name + "b", freq_flat
                 )
-
+        print(self.note_sounds)
         # Initialize menus
         self.main_menu = MainMenu(self)
         self.options_menu = OptionsMenu(self)
@@ -182,8 +182,13 @@ class Game:
             else:
                 self.battle_event = None
         elif event.key in config.get_all_playable_keys():
-            # Extract modifier (SHIFT or CTRL for accidentals)
-            modifier = event.mod & (pygame.KMOD_SHIFT | pygame.KMOD_CTRL)
+            # Normalize modifier to standard pygame constants
+            modifier = 0
+            if event.mod & pygame.KMOD_SHIFT:
+                modifier = pygame.KMOD_SHIFT
+            elif event.mod & pygame.KMOD_CTRL:
+                modifier = pygame.KMOD_CTRL
+
             sound_key = (event.key, modifier)
             if sound_key in self.note_sounds:
                 self.note_sounds[sound_key].play()

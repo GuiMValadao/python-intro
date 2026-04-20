@@ -111,9 +111,10 @@ class Button(GameObject):
 
 
 class MovingBlock(GameObject):
-    def __init__(self, game, target_button):
+    def __init__(self, game, target_button, note_key=None):
         self.game = game
         self.target = target_button
+        self.note_key = note_key  # Store the original note_key (may include modifier for sharps/flats)
         # Adjust speed based on config.DIFFICULTY
         base_speed = 3
         if config.DIFFICULTY == "Easy":

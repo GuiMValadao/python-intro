@@ -77,19 +77,17 @@ EXTENDED_NOTE_NAMES = {
     "G3b": (NOTES_TO_KEYS["G"], pygame.KMOD_CTRL),
 }
 
-# Deprecated - use NOTE_NAMES instead
-KEY_BINDINGS = NOTE_NAMES
 
 # Enharmonic equivalents for saving space on acoustic guitar samples
 # Maps flat notes to their enharmonic sharp equivalents (same pitch, different names)
 # This avoids needing separate files for Cb=B, Db=C#, Eb=D#, Fb=E, Gb=F#, etc.
 ENHARMONIC_EQUIVALENTS = {
-    "A2b": "G3#",  # Ab → G#
     "B2b": "A2#",  # Bb → A#
     "B2#": "C3",  # B# → C
     "C3b": "B2",  # Cb → B
     "D3b": "C3#",  # Db → C#
     "E3b": "D3#",  # Eb → D#
+    "E3#": "F3",  # E# → F
     "F3b": "E3",  # Fb → E
     "G3b": "F3#",  # Gb → F#
 }

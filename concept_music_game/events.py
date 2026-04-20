@@ -12,7 +12,6 @@ def load_sound(key_name, frequency, duration=0.7, sample_rate=22050):
     """
     # Resolve enharmonic equivalents (e.g., "A2b" → "G3#")
     actual_note_name = config.get_sound_file_name(key_name)
-    print(actual_note_name)
     sound_file = config.ROOT_PATH / "sounds" / f"note_{actual_note_name}.wav"
     try:
         return pygame.mixer.Sound(str(sound_file))
@@ -151,6 +150,7 @@ class BattleEvent:
     def update(self):
         self.spawn_timer += 1
         current_keys = pygame.key.get_pressed()
+        current_mods = pygame.key.get_mods()  # Get current modifier state
 
         # Spawn blocks based on song
         if (
@@ -167,7 +167,10 @@ class BattleEvent:
                     target_button = button
                     break
             if target_button:
-                self.moving_blocks.append(MovingBlock(self.game, target_button))
+                # Pass original note_key to preserve accidental information
+                self.moving_blocks.append(
+                    MovingBlock(self.game, target_button, note_key)
+                )
             self.song_index += 1
 
         # Update button light-up timers
@@ -196,17 +199,38 @@ class BattleEvent:
         for block in self.moving_blocks[:]:
             block.update()
             if block.is_colliding():
+                # Extract expected base key and modifier from note_key
+                if isinstance(block.note_key, tuple):
+                    expected_base_key, expected_modifier = block.note_key
+                else:
+                    expected_base_key = block.note_key
+                    expected_modifier = 0
+
+                # Get current modifier state
+                current_modifier = 0
+                if current_mods & pygame.KMOD_SHIFT:
+                    current_modifier = pygame.KMOD_SHIFT
+                elif current_mods & pygame.KMOD_CTRL:
+                    current_modifier = pygame.KMOD_CTRL
+
+                # Check if the correct key with correct modifier is pressed
                 if (
-                    current_keys[block.target.key]
-                    and not self.previous_keys[block.target.key]
+                    current_keys[expected_base_key]
+                    and not self.previous_keys[expected_base_key]
+                    and current_modifier == expected_modifier
                 ):
                     self.score += 1
-                    # Play the corresponding note (handle both natural and accidental keys)
-                    sound_key = (
-                        block.target.key
-                        if isinstance(block.target.key, tuple)
-                        else (block.target.key, 0)
-                    )
+                    # Play the corresponding note using preserved note_key (handles sharps/flats)
+                    if block.note_key is not None:
+                        # note_key is either a simple key or (key, modifier) tuple
+                        sound_key = (
+                            block.note_key
+                            if isinstance(block.note_key, tuple)
+                            else (block.note_key, 0)
+                        )
+                    else:
+                        # Fallback for blocks without note_key
+                        sound_key = (block.target.key, 0)
                     if sound_key in self.sounds:
                         self.sounds[sound_key].play()
                     # Light up the button on successful hit (use base key for button state)
