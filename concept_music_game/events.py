@@ -64,47 +64,12 @@ class BattleEvent:
         self.moving_blocks = []
         self.spawn_timer = 0
         self.score = 0
+        self.full_hits = 0  # Hits with 80%+ precision
+        self.half_hits = 0  # Hits with <80% precision
         self.previous_keys = pygame.key.get_pressed()
         # Load sounds for each button (try files first, fallback to generated)
-        # Includes natural notes, sharps (with SHIFT), and flats (with CTRL)
-        self.sounds = {}
-        for key in config.get_all_playable_keys():
-            note_name = config.NOTE_NAMES[key]
-            # Natural note
-            freq = config.get_note_frequency(key, 0)
-            if freq:
-                self.sounds[(key, 0)] = load_sound(note_name, freq)
-            # Sharp (SHIFT modifier)
-            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
-            if freq_sharp:
-                self.sounds[(key, pygame.KMOD_SHIFT)] = load_sound(
-                    note_name + "#", freq_sharp
-                )
-            # Flat (CTRL modifier)
-            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
-            if freq_flat:
-                self.sounds[(key, pygame.KMOD_CTRL)] = load_sound(
-                    note_name + "b", freq_flat
-                )
-        # Generate distorted sounds for missed attempts
-        self.distorted_sounds = {}
-        for key in config.get_all_playable_keys():
-            # Natural note
-            freq = config.get_note_frequency(key, 0)
-            if freq:
-                self.distorted_sounds[(key, 0)] = generate_distorted_sound(freq)
-            # Sharp
-            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
-            if freq_sharp:
-                self.distorted_sounds[(key, pygame.KMOD_SHIFT)] = (
-                    generate_distorted_sound(freq_sharp)
-                )
-            # Flat
-            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
-            if freq_flat:
-                self.distorted_sounds[(key, pygame.KMOD_CTRL)] = (
-                    generate_distorted_sound(freq_flat)
-                )
+        # Includes natural notes, sharps (with SHARP_MODIFIER, default SHIFT), and flats (with FLAT_MODIFIER, default CTRL)
+        self._load_all_sounds()
         # Track button states: {key: {'lit': False, 'time': 0}}
         # Only track natural note buttons (sharps/flats share same button)
         self.button_states = {
@@ -146,6 +111,50 @@ class BattleEvent:
                 prev_frame = frame  # Use original frame for difference calculation
 
         return processed_song
+
+    def _load_all_sounds(self):
+        """Load all sound variants (natural, sharp, flat) and distorted sounds for missed attempts."""
+        # Load sounds for each button (try files first, fallback to generated)
+        # Includes natural notes, sharps (with SHIFT), and flats (with CTRL)
+        self.sounds = {}
+        for key in config.get_all_playable_keys():
+            note_name = config.NOTE_NAMES[key]
+            # Natural note
+            freq = config.get_note_frequency(key, 0)
+            if freq:
+                self.sounds[(key, 0)] = load_sound(note_name, freq)
+            # Sharp (SHIFT modifier)
+            freq_sharp = config.get_note_frequency(key, config.SHARP_MODIFIER)
+            if freq_sharp:
+                self.sounds[(key, config.SHARP_MODIFIER)] = load_sound(
+                    note_name + "#", freq_sharp
+                )
+            # Flat (CTRL modifier)
+            freq_flat = config.get_note_frequency(key, config.FLAT_MODIFIER)
+            if freq_flat:
+                self.sounds[(key, config.FLAT_MODIFIER)] = load_sound(
+                    note_name + "b", freq_flat
+                )
+
+        # Generate distorted sounds for missed attempts
+        self.distorted_sounds = {}
+        for key in config.get_all_playable_keys():
+            # Natural note
+            freq = config.get_note_frequency(key, 0)
+            if freq:
+                self.distorted_sounds[(key, 0)] = generate_distorted_sound(freq)
+            # Sharp
+            freq_sharp = config.get_note_frequency(key, config.SHARP_MODIFIER)
+            if freq_sharp:
+                self.distorted_sounds[(key, config.SHARP_MODIFIER)] = (
+                    generate_distorted_sound(freq_sharp)
+                )
+            # Flat
+            freq_flat = config.get_note_frequency(key, config.FLAT_MODIFIER)
+            if freq_flat:
+                self.distorted_sounds[(key, config.FLAT_MODIFIER)] = (
+                    generate_distorted_sound(freq_flat)
+                )
 
     def update(self):
         self.spawn_timer += 1
@@ -208,10 +217,10 @@ class BattleEvent:
 
                 # Get current modifier state
                 current_modifier = 0
-                if current_mods & pygame.KMOD_SHIFT:
-                    current_modifier = pygame.KMOD_SHIFT
-                elif current_mods & pygame.KMOD_CTRL:
-                    current_modifier = pygame.KMOD_CTRL
+                if current_mods & config.SHARP_MODIFIER:
+                    current_modifier = config.SHARP_MODIFIER
+                elif current_mods & config.FLAT_MODIFIER:
+                    current_modifier = config.FLAT_MODIFIER
 
                 # Check if the correct key with correct modifier is pressed
                 if (
@@ -219,7 +228,19 @@ class BattleEvent:
                     and not self.previous_keys[expected_base_key]
                     and current_modifier == expected_modifier
                 ):
-                    self.score += 1
+                    # Calculate precision based on overlap
+                    precision = self.calculate_precision(
+                        block.rect(), block.target.rect()
+                    )
+
+                    # Award points based on precision (80% threshold)
+                    if precision >= 80.0:
+                        self.score += 1
+                        self.full_hits += 1
+                    else:
+                        self.score += 0.5  # Half points for imprecise hits
+                        self.half_hits += 1
+
                     # Play the corresponding note using preserved note_key (handles sharps/flats)
                     if block.note_key is not None:
                         # note_key is either a simple key or (key, modifier) tuple
@@ -250,6 +271,34 @@ class BattleEvent:
             self.song_finished = True
 
         self.previous_keys = current_keys
+
+    def calculate_precision(self, rect1, rect2):
+        """
+        Calculate the precision/accuracy of a hit based on rectangle overlap.
+
+        Args:
+            rect1: pygame.Rect of the moving block
+            rect2: pygame.Rect of the target button
+
+        Returns:
+            float: Overlap percentage (0-100)
+        """
+        # Calculate intersection
+        intersection = rect1.clip(rect2)
+
+        if intersection.width <= 0 or intersection.height <= 0:
+            return 0.0
+
+        intersection_area = intersection.width * intersection.height
+        rect1_area = rect1.width * rect1.height
+
+        # Calculate percentage of rect1 that overlaps with rect2
+        # (how much of the block is inside the button area)
+        if rect1_area == 0:
+            return 0.0
+
+        overlap_percentage = (intersection_area / rect1_area) * 100
+        return min(overlap_percentage, 100.0)  # Cap at 100%
 
     def draw(self):
         self.staff.draw()

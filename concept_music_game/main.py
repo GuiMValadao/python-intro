@@ -47,18 +47,17 @@ class Game:
             if freq:
                 self.note_sounds[(key, 0)] = load_sound(note_name, freq)
             # Sharp (SHIFT modifier)
-            freq_sharp = config.get_note_frequency(key, pygame.KMOD_SHIFT)
+            freq_sharp = config.get_note_frequency(key, config.SHARP_MODIFIER)
             if freq_sharp:
-                self.note_sounds[(key, pygame.KMOD_SHIFT)] = load_sound(
+                self.note_sounds[(key, config.SHARP_MODIFIER)] = load_sound(
                     note_name + "#", freq_sharp
                 )
             # Flat (CTRL modifier)
-            freq_flat = config.get_note_frequency(key, pygame.KMOD_CTRL)
+            freq_flat = config.get_note_frequency(key, config.FLAT_MODIFIER)
             if freq_flat:
-                self.note_sounds[(key, pygame.KMOD_CTRL)] = load_sound(
+                self.note_sounds[(key, config.FLAT_MODIFIER)] = load_sound(
                     note_name + "b", freq_flat
                 )
-        print(self.note_sounds)
         # Initialize menus
         self.main_menu = MainMenu(self)
         self.options_menu = OptionsMenu(self)
@@ -110,16 +109,13 @@ class Game:
             # Reset pause menu selection
             self.pause_menu.selected_index = 0
             self.pause_menu.hovered_button = None
-        elif new_state == GameState.VICTORY:
-            pass  # Keep the battle_event for display
+        elif new_state == GameState.SONG_END:
+            pass  # Keep the battle_event for statistics display
 
     def handle_input(self, event):
         """Centralized input handling based on current state."""
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_q and (
-                self.current_state == GameState.MENU
-                or self.current_state == GameState.VICTORY
-            ):
+            if event.key == pygame.K_q and (self.current_state == GameState.MENU):
                 return False  # Quit game
 
             if self.current_state == GameState.MENU:
@@ -130,8 +126,8 @@ class Game:
                 return self.handle_play_input(event)
             elif self.current_state == GameState.PAUSE:
                 return self.handle_pause_input(event)
-            elif self.current_state == GameState.VICTORY:
-                return self.handle_victory_input(event)
+            elif self.current_state == GameState.SONG_END:
+                return self.handle_song_end_input(event)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.current_state == GameState.MENU:
@@ -148,6 +144,8 @@ class Game:
 
     def handle_menu_input(self, event):
         """Handle menu keyboard input."""
+        if event.key == pygame.K_q:
+            return False  # Quit from menu
         return self.main_menu.handle_key_press(event)
 
     def handle_menu_click(self, event):
@@ -184,20 +182,22 @@ class Game:
         elif event.key in config.get_all_playable_keys():
             # Normalize modifier to standard pygame constants
             modifier = 0
-            if event.mod & pygame.KMOD_SHIFT:
-                modifier = pygame.KMOD_SHIFT
-            elif event.mod & pygame.KMOD_CTRL:
-                modifier = pygame.KMOD_CTRL
+            if event.mod & config.SHARP_MODIFIER:
+                modifier = config.SHARP_MODIFIER
+            elif event.mod & config.FLAT_MODIFIER:
+                modifier = config.FLAT_MODIFIER
 
             sound_key = (event.key, modifier)
             if sound_key in self.note_sounds:
                 self.note_sounds[sound_key].play()
         return True
 
-    def handle_victory_input(self, event):
-        """Handle victory screen input."""
-        if event.key == pygame.K_m:
-            self.set_state(GameState.MENU)
+    def handle_song_end_input(self, event):
+        """Handle song end screen input."""
+        if event.key == pygame.K_RETURN:
+            # Return to the game world
+            self.set_state(GameState.PLAY)
+            self.battle_event = None
         return True
 
     def update(self):
@@ -222,7 +222,7 @@ class Game:
             if self.battle_event:
                 self.battle_event.update()
                 if self.battle_event.song_finished:
-                    self.set_state(GameState.VICTORY)
+                    self.set_state(GameState.SONG_END)
 
             # Only move player when actually playing (not paused)
             self.player.move()
@@ -237,8 +237,8 @@ class Game:
             self.draw_play()
         elif self.current_state == GameState.PAUSE:
             self.draw_pause()
-        elif self.current_state == GameState.VICTORY:
-            self.draw_victory()
+        elif self.current_state == GameState.SONG_END:
+            self.draw_song_end()
 
     def draw_menu(self):
         """Draw menu screen."""
@@ -261,26 +261,116 @@ class Game:
             )
             self.display_surface.blit(score_surface, (20, 20))
 
-    def draw_victory(self):
-        """Draw victory screen."""
-        self.display_surface.fill(config.MENU_BACKGROUND)
+    def draw_song_end(self):
+        """Draw song end screen with statistics."""
+        # Draw the battle background
         self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
-        title_text = self.game_font.render("Victory!", True, (255, 255, 255))
-        info_text = self.game_font.render(
-            "Press M to return to menu or Q to quit", True, (255, 255, 255)
+
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface(
+            (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 180))  # Dark overlay
+        self.display_surface.blit(overlay, (0, 0))
+
+        # Calculate statistics
+        if self.battle_event:
+            full_hits = self.battle_event.full_hits
+            half_hits = self.battle_event.half_hits
+            correct_notes = full_hits + (
+                0.5 * half_hits
+            )  # Score including fractional hits
+            total_notes = len(self.battle_event.song)
+            accuracy = (correct_notes / total_notes * 100) if total_notes > 0 else 0
+        else:
+            full_hits = 0
+            half_hits = 0
+            correct_notes = 0
+            total_notes = 0
+            accuracy = 0
+
+        # Create a larger font for statistics
+        small_font = pygame.font.SysFont("Bauhaus 93", 24)
+        medium_font = pygame.font.SysFont("Bauhaus 93", 36)
+        large_font = pygame.font.SysFont("Bauhaus 93", 48)
+
+        # Title
+        title_text = large_font.render("Song Complete!", True, (255, 215, 0))
+        title_rect = title_text.get_rect(center=(config.DISPLAY_WIDTH // 2, 80))
+        self.display_surface.blit(title_text, title_rect)
+
+        # Statistics section
+        stats_y = 180
+        line_height = 50
+
+        # Perfect hits (full score)
+        perfect_text = medium_font.render(
+            f"Perfect Hits: {full_hits}", True, (100, 255, 100)
         )
         self.display_surface.blit(
-            title_text,
+            perfect_text,
+            ((config.DISPLAY_WIDTH - perfect_text.get_width()) // 2, stats_y),
+        )
+
+        # Good hits (half score)
+        good_text = medium_font.render(f"Good Hits: {half_hits}", True, (255, 200, 100))
+        self.display_surface.blit(
+            good_text,
             (
-                (config.DISPLAY_WIDTH - title_text.get_width()) // 2,
-                config.DISPLAY_HEIGHT // 3,
+                (config.DISPLAY_WIDTH - good_text.get_width()) // 2,
+                stats_y + line_height,
             ),
         )
+
+        # Total notes
+        total_text = medium_font.render(
+            f"Total Notes: {total_notes}", True, (100, 150, 255)
+        )
         self.display_surface.blit(
-            info_text,
+            total_text,
             (
-                (config.DISPLAY_WIDTH - info_text.get_width()) // 2,
-                config.DISPLAY_HEIGHT // 2,
+                (config.DISPLAY_WIDTH - total_text.get_width()) // 2,
+                stats_y + line_height * 2,
+            ),
+        )
+
+        # Accuracy percentage
+        accuracy_color = (
+            (100, 255, 100)
+            if accuracy >= 90
+            else (255, 255, 100) if accuracy >= 70 else (255, 150, 100)
+        )
+        accuracy_text = medium_font.render(
+            f"Accuracy: {accuracy:.1f}%", True, accuracy_color
+        )
+        self.display_surface.blit(
+            accuracy_text,
+            (
+                (config.DISPLAY_WIDTH - accuracy_text.get_width()) // 2,
+                stats_y + line_height * 3,
+            ),
+        )
+
+        # Instructions
+        continue_text = small_font.render(
+            "Press ENTER to play again", True, (255, 255, 255)
+        )
+        self.display_surface.blit(
+            continue_text,
+            (
+                (config.DISPLAY_WIDTH - continue_text.get_width()) // 2,
+                stats_y + line_height * 5,
+            ),
+        )
+
+        menu_text = small_font.render(
+            "Press M to return to menu", True, (200, 200, 200)
+        )
+        self.display_surface.blit(
+            menu_text,
+            (
+                (config.DISPLAY_WIDTH - menu_text.get_width()) // 2,
+                stats_y + line_height * 5 + 50,
             ),
         )
 

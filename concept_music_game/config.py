@@ -11,7 +11,7 @@ class GameState(Enum):
     MENU = "menu"
     OPTIONS = "options"
     PLAY = "play"
-    VICTORY = "victory"
+    SONG_END = "song_end"
     PAUSE = "pause"
 
 
@@ -38,6 +38,9 @@ NOTES_TO_KEYS = {
     "G": pygame.K_j,
 }
 
+SHARP_MODIFIER = pygame.KMOD_SHIFT
+FLAT_MODIFIER = pygame.KMOD_CTRL
+
 NOTE_NAMES = {
     NOTES_TO_KEYS["A"]: "A2",  # A2
     NOTES_TO_KEYS["B"]: "B2",  # B2
@@ -60,21 +63,21 @@ EXTENDED_NOTE_NAMES = {
     "F3": NOTES_TO_KEYS["F"],
     "G3": NOTES_TO_KEYS["G"],
     # Sharps
-    "A2#": (NOTES_TO_KEYS["A"], pygame.KMOD_SHIFT),
-    "B2#": (NOTES_TO_KEYS["B"], pygame.KMOD_SHIFT),
-    "C3#": (NOTES_TO_KEYS["C"], pygame.KMOD_SHIFT),
-    "D3#": (NOTES_TO_KEYS["D"], pygame.KMOD_SHIFT),
-    "E3#": (NOTES_TO_KEYS["E"], pygame.KMOD_SHIFT),
-    "F3#": (NOTES_TO_KEYS["F"], pygame.KMOD_SHIFT),
-    "G3#": (NOTES_TO_KEYS["G"], pygame.KMOD_SHIFT),
+    "A2#": (NOTES_TO_KEYS["A"], SHARP_MODIFIER),
+    "B2#": (NOTES_TO_KEYS["B"], SHARP_MODIFIER),
+    "C3#": (NOTES_TO_KEYS["C"], SHARP_MODIFIER),
+    "D3#": (NOTES_TO_KEYS["D"], SHARP_MODIFIER),
+    "E3#": (NOTES_TO_KEYS["E"], SHARP_MODIFIER),
+    "F3#": (NOTES_TO_KEYS["F"], SHARP_MODIFIER),
+    "G3#": (NOTES_TO_KEYS["G"], SHARP_MODIFIER),
     # Flats
-    "A2b": (NOTES_TO_KEYS["A"], pygame.KMOD_CTRL),
-    "B2b": (NOTES_TO_KEYS["B"], pygame.KMOD_CTRL),
-    "C3b": (NOTES_TO_KEYS["C"], pygame.KMOD_CTRL),
-    "D3b": (NOTES_TO_KEYS["D"], pygame.KMOD_CTRL),
-    "E3b": (NOTES_TO_KEYS["E"], pygame.KMOD_CTRL),
-    "F3b": (NOTES_TO_KEYS["F"], pygame.KMOD_CTRL),
-    "G3b": (NOTES_TO_KEYS["G"], pygame.KMOD_CTRL),
+    "A2b": (NOTES_TO_KEYS["A"], FLAT_MODIFIER),
+    "B2b": (NOTES_TO_KEYS["B"], FLAT_MODIFIER),
+    "C3b": (NOTES_TO_KEYS["C"], FLAT_MODIFIER),
+    "D3b": (NOTES_TO_KEYS["D"], FLAT_MODIFIER),
+    "E3b": (NOTES_TO_KEYS["E"], FLAT_MODIFIER),
+    "F3b": (NOTES_TO_KEYS["F"], FLAT_MODIFIER),
+    "G3b": (NOTES_TO_KEYS["G"], FLAT_MODIFIER),
 }
 
 
@@ -141,14 +144,14 @@ def get_note_frequency(key, modifier=0):
 
     Args:
         key: pygame key constant (e.g., pygame.K_a)
-        modifier: pygame key modifier (0, pygame.KMOD_SHIFT, or pygame.KMOD_CTRL)
+        modifier: pygame key modifier (0, SHARP_MODIFIER, or FLAT_MODIFIER)
 
     Returns:
         int: Frequency in Hz, or None if key not found
     """
-    if modifier & pygame.KMOD_SHIFT:
+    if modifier & SHARP_MODIFIER:
         return _SHARP_FREQUENCIES.get(key)
-    elif modifier & pygame.KMOD_CTRL:
+    elif modifier & FLAT_MODIFIER:
         return _FLAT_FREQUENCIES.get(key)
     else:
         return _NATURAL_FREQUENCIES.get(key)
