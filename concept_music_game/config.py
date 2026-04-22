@@ -44,13 +44,13 @@ SHARP_MODIFIER = pygame.KMOD_SHIFT
 FLAT_MODIFIER = pygame.KMOD_CTRL
 
 NOTE_NAMES = {
-    NOTES_TO_KEYS["A"]: "A2",  # A2
-    NOTES_TO_KEYS["B"]: "B2",  # B2
-    NOTES_TO_KEYS["C"]: "C3",  # C3
-    NOTES_TO_KEYS["D"]: "D3",  # D3
-    NOTES_TO_KEYS["E"]: "E3",  # E3
-    NOTES_TO_KEYS["F"]: "F3",  # F3
-    NOTES_TO_KEYS["G"]: "G3",  # G3
+    NOTES_TO_KEYS["A"]: "A2",
+    NOTES_TO_KEYS["B"]: "B2",
+    NOTES_TO_KEYS["C"]: "C3",
+    NOTES_TO_KEYS["D"]: "D3",
+    NOTES_TO_KEYS["E"]: "E3",
+    NOTES_TO_KEYS["F"]: "F3",
+    NOTES_TO_KEYS["G"]: "G3",
 }
 
 # Extended note names for songs - includes sharps and flats
@@ -82,20 +82,69 @@ EXTENDED_NOTE_NAMES = {
     "G3b": (NOTES_TO_KEYS["G"], FLAT_MODIFIER),
 }
 
-
 # Enharmonic equivalents for saving space on acoustic guitar samples
-# Maps flat notes to their enharmonic sharp equivalents (same pitch, different names)
-# This avoids needing separate files for Cb=B, Db=C#, Eb=D#, Fb=E, Gb=F#, etc.
 ENHARMONIC_EQUIVALENTS = {
-    "B2b": "A2#",  # Bb → A#
-    "B2#": "C3",  # B# → C
-    "C3b": "B2",  # Cb → B
-    "D3b": "C3#",  # Db → C#
-    "E3b": "D3#",  # Eb → D#
-    "E3#": "F3",  # E# → F
-    "F3b": "E3",  # Fb → E
-    "G3b": "F3#",  # Gb → F#
+    "B2b": "A2#",
+    "B2#": "C3",
+    "C3b": "B2",
+    "D3b": "C3#",
+    "E3b": "D3#",
+    "E3#": "F3",
+    "F3b": "E3",
+    "G3b": "F3#",
 }
+
+# ---------------------------------------------------------------------------
+# Key signatures
+# Each entry maps natural note names to their altered default in that key.
+# The modifier key overrides the signature back to natural during play.
+# Sharps: value ends with "#"  → Shift restores natural
+# Flats:  value ends with "b"  → Ctrl  restores natural
+# ---------------------------------------------------------------------------
+KEY_SIGNATURES = {
+    # Major keys (sharps)
+    "C_major": {},
+    "G_major": {"F3": "F3#"},
+    "D_major": {"F3": "F3#", "C3": "C3#"},
+    "A_major": {"F3": "F3#", "C3": "C3#", "G3": "G3#"},
+    "E_major": {"F3": "F3#", "C3": "C3#", "G3": "G3#", "D3": "D3#"},
+    "B_major": {"F3": "F3#", "C3": "C3#", "G3": "G3#", "D3": "D3#", "A2": "A2#"},
+    # Major keys (flats)
+    "F_major": {"B2": "B2b"},
+    "Bb_major": {"B2": "B2b", "E3": "E3b"},
+    "Eb_major": {"B2": "B2b", "E3": "E3b", "A2": "A2b"},
+    "Ab_major": {"B2": "B2b", "E3": "E3b", "A2": "A2b", "D3": "D3b"},
+    # Relative minor keys (same signatures as their relative major)
+    "A_minor": {},       # relative of C major
+    "E_minor": {"F3": "F3#"},
+    "D_minor": {"B2": "B2b"},
+    "G_minor": {"B2": "B2b", "E3": "E3b"},
+}
+
+# Human-readable display names for key signatures shown in the HUD
+KEY_SIGNATURE_DISPLAY = {
+    "C_major": "C Major",
+    "G_major": "G Major",
+    "D_major": "D Major",
+    "A_major": "A Major",
+    "E_major": "E Major",
+    "B_major": "B Major",
+    "F_major": "F Major",
+    "Bb_major": "Bb Major",
+    "Eb_major": "Eb Major",
+    "Ab_major": "Ab Major",
+    "A_minor": "A Minor",
+    "E_minor": "E Minor",
+    "D_minor": "D Minor",
+    "G_minor": "G Minor",
+}
+
+CURRENT_KEY_SIGNATURE = "C_major"
+
+
+def get_key_signature():
+    """Return the alterations dict for the current key signature."""
+    return KEY_SIGNATURES.get(CURRENT_KEY_SIGNATURE, {})
 
 
 def get_sound_file_name(note_name):
@@ -111,32 +160,26 @@ def get_sound_file_name(note_name):
     return ENHARMONIC_EQUIVALENTS.get(note_name, note_name)
 
 
-# Musical note frequencies (Hz) - natural notes only
-# Sharps and flats are calculated using semitone ratio
-_SEMITONE_RATIO = 2 ** (1 / 12)  # Equal temperament semitone ratio
+_SEMITONE_RATIO = 2 ** (1 / 12)
 
-# Natural note frequencies
 _NATURAL_FREQUENCIES = {
-    NOTES_TO_KEYS["A"]: 110,  # A2
-    NOTES_TO_KEYS["B"]: 123,  # B2
-    NOTES_TO_KEYS["C"]: 131,  # C3
-    NOTES_TO_KEYS["D"]: 147,  # D3
-    NOTES_TO_KEYS["E"]: 165,  # E3
-    NOTES_TO_KEYS["F"]: 175,  # F3
-    NOTES_TO_KEYS["G"]: 196,  # G3
+    NOTES_TO_KEYS["A"]: 110,
+    NOTES_TO_KEYS["B"]: 123,
+    NOTES_TO_KEYS["C"]: 131,
+    NOTES_TO_KEYS["D"]: 147,
+    NOTES_TO_KEYS["E"]: 165,
+    NOTES_TO_KEYS["F"]: 175,
+    NOTES_TO_KEYS["G"]: 196,
 }
 
-# Sharp frequencies (up one semitone) - accessed with SHIFT modifier
 _SHARP_FREQUENCIES = {
     k: int(v * _SEMITONE_RATIO) for k, v in _NATURAL_FREQUENCIES.items()
 }
 
-# Flat frequencies (down one semitone) - accessed with CTRL modifier
 _FLAT_FREQUENCIES = {
     k: int(v / _SEMITONE_RATIO) for k, v in _NATURAL_FREQUENCIES.items()
 }
 
-# Keep original NOTE_FREQUENCIES for backward compatibility
 NOTE_FREQUENCIES = _NATURAL_FREQUENCIES.copy()
 
 
@@ -145,7 +188,7 @@ def get_note_frequency(key, modifier=0):
     Get frequency for a key with optional modifier.
 
     Args:
-        key: pygame key constant (e.g., pygame.K_a)
+        key: pygame key constant
         modifier: pygame key modifier (0, SHARP_MODIFIER, or FLAT_MODIFIER)
 
     Returns:

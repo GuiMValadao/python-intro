@@ -181,15 +181,16 @@ class Game:
                 self.battle_event = None
         elif event.key in config.get_all_playable_keys():
             # Normalize modifier to standard pygame constants
-            modifier = 0
-            if event.mod & config.SHARP_MODIFIER:
-                modifier = config.SHARP_MODIFIER
-            elif event.mod & config.FLAT_MODIFIER:
-                modifier = config.FLAT_MODIFIER
+            if self.battle_event is None:
+                modifier = 0
+                if event.mod & config.SHARP_MODIFIER:
+                    modifier = config.SHARP_MODIFIER
+                elif event.mod & config.FLAT_MODIFIER:
+                    modifier = config.FLAT_MODIFIER
 
-            sound_key = (event.key, modifier)
-            if sound_key in self.note_sounds:
-                self.note_sounds[sound_key].play()
+                sound_key = (event.key, modifier)
+                if sound_key in self.note_sounds:
+                    self.note_sounds[sound_key].play()
         return True
 
     def handle_song_end_input(self, event):
