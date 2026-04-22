@@ -12,7 +12,9 @@ def load_sound(key_name, frequency, duration=0.7, sample_rate=22050):
     """
     # Resolve enharmonic equivalents (e.g., "A2b" → "G3#")
     actual_note_name = config.get_sound_file_name(key_name)
-    sound_file = config.ROOT_PATH / "sounds" / f"note_{actual_note_name}.wav"
+    sound_file = (
+        config.ROOT_PATH / "sounds" / config.INSTRUMENT / f"note_{actual_note_name}.wav"
+    )
     try:
         return pygame.mixer.Sound(str(sound_file))
     except (pygame.error, FileNotFoundError):
@@ -55,6 +57,28 @@ def generate_distorted_sound(
     # Create stereo sound (duplicate for both channels and ensure C-contiguous)
     stereo = np.ascontiguousarray(np.column_stack((arr, arr)))
     return pygame.sndarray.make_sound(stereo)
+
+
+def get_modifier_color_overlay(modifier):
+    """
+    Get a color overlay and symbol based on note modifier.
+
+    Args:
+        modifier: pygame key modifier (0 for natural, SHARP_MODIFIER for sharp, FLAT_MODIFIER for flat)
+
+    Returns:
+        tuple: (overlay_color, symbol_text) where overlay_color is RGB for blending and symbol_text is "#" or "b"
+               Returns None for natural notes
+    """
+    if modifier & config.SHARP_MODIFIER:
+        # Lighter color for sharps (blend with white for a brighter appearance)
+        return ((150, 150, 150), "#")  # Light gray/white blend
+    elif modifier & config.FLAT_MODIFIER:
+        # Darker color for flats (blend with black for a darker appearance)
+        return ((40, 40, 40), "b")  # Dark gray/black blend
+    else:
+        # Natural note - no overlay
+        return None
 
 
 class BattleEvent:

@@ -25,6 +25,8 @@ SPAWN_MIN = 10
 SPAWN_MAX = 120
 DIFFICULTY = "Medium"  # Default difficulty
 CURRENT_SONG = "song2"  # variable to change the song to play
+INSTRUMENT = "acoustic_guitar"  # change the folder with the sounds
+GAME_FONT = "Bauhaus 93"
 
 # Key bindings - maps pygame keys to note names
 # Can be easily remapped for different key layouts

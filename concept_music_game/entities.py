@@ -115,6 +115,12 @@ class MovingBlock(GameObject):
         self.game = game
         self.target = target_button
         self.note_key = note_key  # Store the original note_key (may include modifier for sharps/flats)
+
+        # Extract modifier from note_key if it's a tuple
+        self.modifier = 0
+        if isinstance(note_key, tuple):
+            _, self.modifier = note_key
+
         # Adjust speed based on config.DIFFICULTY
         base_speed = 3
         if config.DIFFICULTY == "Easy":
@@ -148,8 +154,37 @@ class MovingBlock(GameObject):
         self.image = self.image.copy()
         self.image.fill(color, special_flags=pygame.BLEND_MULT)
 
+        # Apply modifier-based color overlay (lighter for sharps, darker for flats)
+        self._apply_modifier_overlay()
+
     def update(self):
         self.position += self.direction * self.speed
+
+    def _apply_modifier_overlay(self):
+        """Apply a color overlay and symbol based on the note modifier (sharp, flat, or natural)."""
+        from events import get_modifier_color_overlay
+
+        result = get_modifier_color_overlay(self.modifier)
+
+        if result is None:
+            # Natural note - no overlay or symbol
+            return
+
+        overlay_color, symbol_text = result
+
+        # Apply color overlay
+        if overlay_color:
+            self.image.fill(overlay_color, special_flags=pygame.BLEND_ADD)
+
+        # Draw symbol on the block
+        font = pygame.font.SysFont(config.GAME_FONT, 32)
+        symbol_surface = font.render(symbol_text, True, (0, 0, 0))
+
+        # Center the symbol on the block
+        symbol_rect = symbol_surface.get_rect(
+            center=(self.image.get_width() // 2, self.image.get_height() // 2)
+        )
+        self.image.blit(symbol_surface, symbol_rect)
 
     def is_colliding(self):
         return self.rect().colliderect(self.target.rect())

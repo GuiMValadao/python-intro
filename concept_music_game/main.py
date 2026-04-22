@@ -15,7 +15,7 @@ class Game:
             (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT)
         )
         pygame.display.set_caption("Concept of Music Game")
-        self.game_font = pygame.font.SysFont("Bauhaus 93", 30)
+        self.game_font = pygame.font.SysFont(config.GAME_FONT, 30)
 
         # Sets a background image
         BACKGROUND = pygame.image.load(
@@ -198,6 +198,9 @@ class Game:
             # Return to the game world
             self.set_state(GameState.PLAY)
             self.battle_event = None
+        if event.key == pygame.K_m:
+            self.reset_game()
+            self.set_state(GameState.MENU)
         return True
 
     def update(self):
@@ -290,9 +293,9 @@ class Game:
             accuracy = 0
 
         # Create a larger font for statistics
-        small_font = pygame.font.SysFont("Bauhaus 93", 24)
-        medium_font = pygame.font.SysFont("Bauhaus 93", 36)
-        large_font = pygame.font.SysFont("Bauhaus 93", 48)
+        small_font = pygame.font.SysFont(config.GAME_FONT, 24)
+        medium_font = pygame.font.SysFont(config.GAME_FONT, 36)
+        large_font = pygame.font.SysFont(config.GAME_FONT, 48)
 
         # Title
         title_text = large_font.render("Song Complete!", True, (255, 215, 0))
