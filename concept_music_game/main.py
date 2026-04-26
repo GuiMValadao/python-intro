@@ -2,7 +2,6 @@ import config
 import pygame
 import maps
 
-from config import GameState
 from entities import Player
 from events import BattleEvent, load_sound
 from menu import MainMenu, OptionsMenu, PauseMenu
@@ -36,7 +35,7 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.player = Player(self)
-        self.current_state = GameState.MENU
+        self.current_state = config.GameState.MENU
         self.battle_event = None
 
         # Load sounds for note keys using key bindings from config
@@ -106,43 +105,45 @@ class Game:
         """Transition to a new game state."""
         self.current_state = new_state
 
-        if new_state == GameState.MENU:
+        if new_state == config.GameState.MENU:
             # Reset all game state when returning to menu
             self.reset_game()
-        elif new_state == GameState.OPTIONS:
+        elif new_state == config.GameState.OPTIONS:
             # Reset options menu selection
             self.options_menu.selected_index = 0
             self.options_menu.hovered_button = None
-        elif new_state == GameState.PAUSE:
+        elif new_state == config.GameState.PAUSE:
             # Reset pause menu selection
             self.pause_menu.selected_index = 0
             self.pause_menu.hovered_button = None
-        elif new_state == GameState.SONG_END:
+        elif new_state == config.GameState.SONG_END:
             pass  # Keep the battle_event for statistics display
 
     def handle_input(self, event):
         """Centralized input handling based on current state."""
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_q and (self.current_state == GameState.MENU):
+            if event.key == pygame.K_q and (
+                self.current_state == config.GameState.MENU
+            ):
                 return False  # Quit game
 
-            if self.current_state == GameState.MENU:
+            if self.current_state == config.GameState.MENU:
                 return self.handle_menu_input(event)
-            elif self.current_state == GameState.OPTIONS:
+            elif self.current_state == config.GameState.OPTIONS:
                 return self.handle_options_input(event)
-            elif self.current_state == GameState.PLAY:
+            elif self.current_state == config.GameState.PLAY:
                 return self.handle_play_input(event)
-            elif self.current_state == GameState.PAUSE:
+            elif self.current_state == config.GameState.PAUSE:
                 return self.handle_pause_input(event)
-            elif self.current_state == GameState.SONG_END:
+            elif self.current_state == config.GameState.SONG_END:
                 return self.handle_song_end_input(event)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.current_state == GameState.MENU:
+            if self.current_state == config.GameState.MENU:
                 return self.handle_menu_click(event)
-            elif self.current_state == GameState.OPTIONS:
+            elif self.current_state == config.GameState.OPTIONS:
                 return self.handle_options_click(event)
-            elif self.current_state == GameState.PAUSE:
+            elif self.current_state == config.GameState.PAUSE:
                 return self.handle_pause_click(event)
 
         elif event.type == pygame.MOUSEMOTION:
@@ -179,9 +180,9 @@ class Game:
     def handle_play_input(self, event):
         """Handle play keyboard input."""
         if event.key == pygame.K_p:
-            self.set_state(GameState.PAUSE)
+            self.set_state(config.GameState.PAUSE)
         elif event.key == pygame.K_m:
-            self.set_state(GameState.MENU)
+            self.set_state(config.GameState.MENU)
         elif event.key == pygame.K_b:
             if self.battle_event is None:
                 self.battle_event = BattleEvent(self)
@@ -205,18 +206,18 @@ class Game:
         """Handle song end screen input."""
         if event.key == pygame.K_RETURN:
             # Return to the game world
-            self.set_state(GameState.PLAY)
+            self.set_state(config.GameState.PLAY)
             self.battle_event = None
         if event.key == pygame.K_m:
             self.reset_game()
-            self.set_state(GameState.MENU)
+            self.set_state(config.GameState.MENU)
         return True
 
     def update(self):
         """Update game state."""
         # Get pressed keys for sprite animation
         keys = pygame.key.get_pressed()
-        if self.current_state == GameState.PLAY:
+        if self.current_state == config.GameState.PLAY:
             # Change player sprite based on movement keys
             if keys[pygame.K_RIGHT]:
                 self.player.load_image(
@@ -234,7 +235,7 @@ class Game:
             if self.battle_event:
                 self.battle_event.update()
                 if self.battle_event.song_finished:
-                    self.set_state(GameState.SONG_END)
+                    self.set_state(config.GameState.SONG_END)
 
             # Only move player when actually playing (not paused)
             self.player.move()
@@ -242,15 +243,15 @@ class Game:
 
     def draw(self):
         """Draw based on current state."""
-        if self.current_state == GameState.MENU:
+        if self.current_state == config.GameState.MENU:
             self.draw_menu()
-        elif self.current_state == GameState.OPTIONS:
+        elif self.current_state == config.GameState.OPTIONS:
             self.draw_options()
-        elif self.current_state == GameState.PLAY:
+        elif self.current_state == config.GameState.PLAY:
             self.draw_play()
-        elif self.current_state == GameState.PAUSE:
+        elif self.current_state == config.GameState.PAUSE:
             self.draw_pause()
-        elif self.current_state == GameState.SONG_END:
+        elif self.current_state == config.GameState.SONG_END:
             self.draw_song_end()
 
     def draw_menu(self):
@@ -404,17 +405,13 @@ class Game:
 
     def handle_mouse_motion(self, event):
         """Handle mouse motion for menu hover effects."""
-        if self.current_state == GameState.MENU:
+        if self.current_state == config.GameState.MENU:
             self.main_menu.handle_mouse_motion(event)
-        elif self.current_state == GameState.OPTIONS:
+        elif self.current_state == config.GameState.OPTIONS:
             self.options_menu.handle_mouse_motion(event)
-        elif self.current_state == GameState.PAUSE:
+        elif self.current_state == config.GameState.PAUSE:
             self.pause_menu.handle_mouse_motion(event)
         return True
-
-    def _pause(self):
-        """Legacy pause method - now handled by PAUSE state."""
-        pass
 
     def transition_to_map(self, map_key):
         self.current_map = self.maps[map_key]
