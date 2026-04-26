@@ -1,6 +1,8 @@
 import pygame
-from pathlib import Path
+
 from enum import Enum
+from pathlib import Path
+
 
 ROOT_PATH = Path(__file__).parent
 
@@ -34,10 +36,10 @@ NOTES_TO_KEYS = {
     "A": pygame.K_a,
     "B": pygame.K_s,
     "C": pygame.K_d,
-    "D": pygame.K_f,
-    "E": pygame.K_g,
-    "F": pygame.K_h,
-    "G": pygame.K_j,
+    "D": pygame.K_h,
+    "E": pygame.K_j,
+    "F": pygame.K_k,
+    "G": pygame.K_l,
 }
 
 SHARP_MODIFIER = pygame.KMOD_SHIFT
@@ -115,7 +117,7 @@ KEY_SIGNATURES = {
     "Eb_major": {"B2": "B2b", "E3": "E3b", "A2": "A2b"},
     "Ab_major": {"B2": "B2b", "E3": "E3b", "A2": "A2b", "D3": "D3b"},
     # Relative minor keys (same signatures as their relative major)
-    "A_minor": {},       # relative of C major
+    "A_minor": {},  # relative of C major
     "E_minor": {"F3": "F3#"},
     "D_minor": {"B2": "B2b"},
     "G_minor": {"B2": "B2b", "E3": "E3b"},

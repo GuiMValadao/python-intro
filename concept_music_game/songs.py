@@ -249,10 +249,98 @@ SONG_4 = {
     ],
 }
 
+SONG_5 = {
+    "key_signature": "A_major",
+    "notes": [
+        (
+            50,
+            [
+                EXTENDED_NOTE_NAMES["A2"],
+                EXTENDED_NOTE_NAMES["C3"],
+                EXTENDED_NOTE_NAMES["E3"],
+            ],
+        ),
+        (
+            100,
+            [
+                EXTENDED_NOTE_NAMES["B2"],
+                EXTENDED_NOTE_NAMES["D3"],
+                EXTENDED_NOTE_NAMES["F3"],
+            ],
+        ),
+        (
+            150,
+            [
+                EXTENDED_NOTE_NAMES["C3"],
+                EXTENDED_NOTE_NAMES["E3"],
+                EXTENDED_NOTE_NAMES["G3"],
+            ],
+        ),
+        (
+            200,
+            [
+                EXTENDED_NOTE_NAMES["A2"],
+                EXTENDED_NOTE_NAMES["B2"],
+                EXTENDED_NOTE_NAMES["E3"],
+            ],
+        ),
+        (
+            250,
+            [
+                EXTENDED_NOTE_NAMES["A2"],
+                EXTENDED_NOTE_NAMES["C3"],
+                EXTENDED_NOTE_NAMES["E3"],
+            ],
+        ),
+        (
+            300,
+            [
+                EXTENDED_NOTE_NAMES["C3"],
+                EXTENDED_NOTE_NAMES["F3"],
+                EXTENDED_NOTE_NAMES["A2"],
+            ],
+        ),
+        (
+            350,
+            [
+                EXTENDED_NOTE_NAMES["A2#"],
+                EXTENDED_NOTE_NAMES["C3#"],
+                EXTENDED_NOTE_NAMES["E3#"],
+            ],
+        ),
+        (
+            400,
+            [
+                EXTENDED_NOTE_NAMES["D3#"],
+                EXTENDED_NOTE_NAMES["F3#"],
+                EXTENDED_NOTE_NAMES["B2#"],
+            ],
+        ),
+        (450, {"key_change": "D_major"}),
+        (
+            450,
+            [
+                EXTENDED_NOTE_NAMES["A2#"],
+                EXTENDED_NOTE_NAMES["C3#"],
+                EXTENDED_NOTE_NAMES["E3#"],
+            ],
+        ),
+        (
+            500,
+            [
+                EXTENDED_NOTE_NAMES["D3b"],
+                EXTENDED_NOTE_NAMES["F3b"],
+                EXTENDED_NOTE_NAMES["B2b"],
+            ],
+        ),
+    ],
+}
+
 # Dictionary of available songs
 SONGS = {
     "song1": SONG_1,
     "song2": SONG_2,
     "song3": SONG_3,
     "song4": SONG_4,
+    # "song5": SONG_5,
 }

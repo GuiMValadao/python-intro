@@ -1,7 +1,8 @@
-import pygame
-import numpy as np
-from entities import Staff, MovingBlock, KeyChangeMarker
 import config
+import numpy as np
+import pygame
+
+from entities import Staff, MovingBlock, KeyChangeMarker
 from songs import SONGS
 
 
@@ -32,7 +33,7 @@ def generate_sound(frequency, duration=0.7, sample_rate=22050):
 
 
 def generate_distorted_sound(
-    frequency, duration=0.5, sample_rate=22050, distortion_factor=0.3, volume=0.3
+    frequency, duration=0.5, sample_rate=22050, distortion_factor=0.5, volume=0.1
 ):
     """Generate a distorted sine wave sound for missed notes."""
     frames = int(duration * sample_rate)
@@ -65,11 +66,12 @@ def get_modifier_color_overlay(modifier):
 
 
 class BattleEvent:
-    def __init__(self, game):
+    def __init__(self, game, npc=None):
         self.game = game
         self.staff = Staff(game)
+        self.npc = npc
         self.moving_blocks = []
-        self.key_change_markers = []   # visual-only markers travelling the screen
+        self.key_change_markers = []  # visual-only markers travelling the screen
         self.spawn_timer = 0
         self.score = 0
         self.full_hits = 0
@@ -188,7 +190,16 @@ class BattleEvent:
                     include = False
 
             if include:
-                adjusted = int(frame_time * 0.8) if config.DIFFICULTY == "Hard" else frame_time
+                adjusted = (
+                    int(frame_time * 0.8)
+                    if (
+                        config.DIFFICULTY == "Hard"
+                        and (
+                            (frame_time * 0.8 / frame_time) > config.SPAWN_MIN
+                        )  # Stops notes close together from swarming each other
+                    )
+                    else frame_time
+                )
                 processed.append((adjusted, event))
                 prev_frame = frame_time  # use original for spacing check
 
@@ -205,11 +216,17 @@ class BattleEvent:
 
         for key in config.get_all_playable_keys():
             note_name = config.NOTE_NAMES[key]
-            for modifier, suffix in [(0, ""), (config.SHARP_MODIFIER, "#"), (config.FLAT_MODIFIER, "b")]:
+            for modifier, suffix in [
+                (0, ""),
+                (config.SHARP_MODIFIER, "#"),
+                (config.FLAT_MODIFIER, "b"),
+            ]:
                 freq = config.get_note_frequency(key, modifier)
                 if freq:
                     self.sounds[(key, modifier)] = load_sound(note_name + suffix, freq)
-                    self.distorted_sounds[(key, modifier)] = generate_distorted_sound(freq)
+                    self.distorted_sounds[(key, modifier)] = generate_distorted_sound(
+                        freq
+                    )
 
     # ------------------------------------------------------------------
     # Note resolution
@@ -229,10 +246,10 @@ class BattleEvent:
             str: resolved note name (e.g. "F3", "F3#", "B2b")
         """
         key_sig = config.get_key_signature()
-        note_name = config.NOTE_NAMES[key]   # e.g. "F3"
+        note_name = config.NOTE_NAMES[key]  # e.g. "F3"
 
         if note_name in key_sig:
-            altered = key_sig[note_name]     # e.g. "F3#"
+            altered = key_sig[note_name]  # e.g. "F3#"
             is_raised = altered.endswith("#")
 
             if is_raised and (current_mods & config.FLAT_MODIFIER):
@@ -318,14 +335,12 @@ class BattleEvent:
         if config.DIFFICULTY != "Hard":
             self.key_change_banner = {
                 "key": new_key,
-                "timer": 180,   # 3 seconds at 60 fps
+                "timer": 180,  # 3 seconds at 60 fps
             }
 
     def _spawn_key_change_marker(self, incoming_key):
         """Spawn a visual marker that travels toward the staff as an advance warning."""
-        self.key_change_markers.append(
-            KeyChangeMarker(self.game, incoming_key)
-        )
+        self.key_change_markers.append(KeyChangeMarker(self.game, incoming_key))
 
     def _move_blocks(self):
         """Advance all moving objects and remove those that have passed the target."""
@@ -335,7 +350,9 @@ class BattleEvent:
 
         for marker in self.key_change_markers:
             marker.update()
-        self.key_change_markers = [m for m in self.key_change_markers if m.position.x >= 0]
+        self.key_change_markers = [
+            m for m in self.key_change_markers if m.position.x >= 0
+        ]
 
     def _update_button_timers(self):
         """Tick down the lit-button highlight timers."""
@@ -357,6 +374,9 @@ class BattleEvent:
         for key in config.get_all_playable_keys():
             if current_keys[key] and not self.previous_keys[key]:
                 self._handle_key_press(key, current_mods)
+                # NPC reacts to the overall state after all input is processed
+        if self.npc:
+            self.npc.on_battle_update(self)
 
     def _handle_key_press(self, key, current_mods):
         """Resolve the note produced, then register a hit or miss."""
@@ -378,7 +398,11 @@ class BattleEvent:
             if not block.is_colliding():
                 continue
             # Resolve the block's note under the current key signature
-            block_base = block.note_key[0] if isinstance(block.note_key, tuple) else block.note_key
+            block_base = (
+                block.note_key[0]
+                if isinstance(block.note_key, tuple)
+                else block.note_key
+            )
             block_mod = block.note_key[1] if isinstance(block.note_key, tuple) else 0
 
             # Derive block's sounding note from key sig, treating stored modifier
@@ -412,12 +436,18 @@ class BattleEvent:
             self.score += 0.5
             self.half_hits += 1
 
-        base_key = block.note_key[0] if isinstance(block.note_key, tuple) else block.note_key
+        base_key = (
+            block.note_key[0] if isinstance(block.note_key, tuple) else block.note_key
+        )
         # Resolve the sound that should actually play
         key_sig = config.get_key_signature()
         natural_name = config.NOTE_NAMES[base_key]
         if isinstance(block.note_key, tuple):
-            sound_key = block.note_key if isinstance(block.note_key, tuple) else (block.note_key, 0)
+            sound_key = (
+                block.note_key
+                if isinstance(block.note_key, tuple)
+                else (block.note_key, 0)
+            )
         else:
             sounding_name = key_sig.get(natural_name, natural_name)
             sound_key = self._note_name_to_sound_key(sounding_name, base_key)
@@ -429,11 +459,19 @@ class BattleEvent:
         self.button_states[base_key]["time"] = 10
         self.moving_blocks.remove(block)
 
+        # NPC on-hit note interference/interaction
+        if self.npc:
+            self.npc.on_player_hit(self)
+
     def _register_miss(self, key, resolved_note):
         """Play a distorted version of whatever note the player pressed."""
         sound_key = self._note_name_to_sound_key(resolved_note, key)
         if sound_key in self.distorted_sounds:
             self.distorted_sounds[sound_key].play()
+
+        # NPC on-missed note interference/interaction
+        if self.npc:
+            self.npc.on_player_miss(self)
 
     def _check_song_completion(self):
         if self.song_index >= len(self.song) and len(self.moving_blocks) == 0:
@@ -565,16 +603,16 @@ class BattleEvent:
             # List the altered notes
             key_sig = config.KEY_SIGNATURES.get(banner_key, {})
             if key_sig:
-                changes = "  ".join(
-                    f"{nat}→{alt}" for nat, alt in key_sig.items()
-                )
+                changes = "  ".join(f"{nat}→{alt}" for nat, alt in key_sig.items())
                 detail_surf = detail_font.render(changes, True, (255, 240, 180))
                 detail_surf.set_alpha(alpha)
                 detail_rect = detail_surf.get_rect(center=(cx, cy + 50))
                 self.game.display_surface.blit(detail_surf, detail_rect)
             else:
                 # C major / A minor — no alterations
-                detail_surf = detail_font.render("No alterations", True, (200, 200, 200))
+                detail_surf = detail_font.render(
+                    "No alterations", True, (200, 200, 200)
+                )
                 detail_surf.set_alpha(alpha)
                 detail_rect = detail_surf.get_rect(center=(cx, cy + 50))
                 self.game.display_surface.blit(detail_surf, detail_rect)

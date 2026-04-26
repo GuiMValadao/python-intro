@@ -1,5 +1,6 @@
 import config
 import pygame
+
 from math import sqrt
 
 
@@ -27,30 +28,6 @@ class Player(GameObject):
         self.load_image(config.ROOT_PATH / "images/player/player.png")
         self.PLAYER_SPEED = config.PLAYER_SPEED
 
-    def move_right(self, right):
-        if right:
-            self.position.x += self.PLAYER_SPEED
-        if self.position.x + self.width > config.DISPLAY_WIDTH:
-            self.position.x = config.DISPLAY_WIDTH - self.width
-
-    def move_left(self, left):
-        if left:
-            self.position.x -= self.PLAYER_SPEED
-        if self.position.x < 0:
-            self.position.x = 0
-
-    def move_up(self, up):
-        if up:
-            self.position.y = self.position.y - self.PLAYER_SPEED
-        if self.position.y < 0:
-            self.position.y = 0
-
-    def move_down(self, down):
-        if down:
-            self.position.y = self.position.y + self.PLAYER_SPEED
-        if self.position.y + self.height > config.DISPLAY_HEIGHT:
-            self.position.y = config.DISPLAY_HEIGHT - self.height
-
     def move(self):
         keys = pygame.key.get_pressed()
         right = keys[pygame.K_RIGHT]
@@ -64,13 +41,19 @@ class Player(GameObject):
         )
 
         if right:
-            self.move_right(True)
+            self.position.x += self.PLAYER_SPEED
         if left:
-            self.move_left(True)
+            self.position.x -= self.PLAYER_SPEED
         if up:
-            self.move_up(True)
+            self.position.y = self.position.y - self.PLAYER_SPEED
         if down:
-            self.move_down(True)
+            self.position.y = self.position.y + self.PLAYER_SPEED
+
+        # Clamp to map bounds instead of screen bounds
+        map_w = self.game.current_map.width
+        map_h = self.game.current_map.height
+        self.position.x = max(0, min(self.position.x, map_w - self.width))
+        self.position.y = max(0, min(self.position.y, map_h - self.height))
 
 
 class Staff(GameObject):
@@ -95,13 +78,13 @@ class Button(GameObject):
         self.game = game
         self.index = index
         self.key = [
-            pygame.K_a,
-            pygame.K_s,
-            pygame.K_d,
-            pygame.K_f,
-            pygame.K_g,
-            pygame.K_h,
-            pygame.K_j,
+            config.NOTES_TO_KEYS["A"],
+            config.NOTES_TO_KEYS["B"],
+            config.NOTES_TO_KEYS["C"],
+            config.NOTES_TO_KEYS["D"],
+            config.NOTES_TO_KEYS["E"],
+            config.NOTES_TO_KEYS["F"],
+            config.NOTES_TO_KEYS["G"],
         ][index]
         self.load_image(config.ROOT_PATH / f"images/buttons/button{index+1}.png")
 
@@ -185,7 +168,7 @@ class KeyChangeMarker(GameObject):
     """
 
     # Height of the marker bar — spans the full staff vertically
-    BAR_HEIGHT = 7 * 30 + 32   # 7 buttons × 30 px spacing + one button height
+    BAR_HEIGHT = 7 * 30 + 32  # 7 buttons × 30 px spacing + one button height
 
     def __init__(self, game, incoming_key):
         self.game = game
@@ -196,25 +179,25 @@ class KeyChangeMarker(GameObject):
         if config.DIFFICULTY == "Easy":
             self.speed = base_speed * 0.7
         else:
-            self.speed = base_speed   # Medium (Hard never spawns markers)
+            self.speed = base_speed  # Medium (Hard never spawns markers)
 
         # Build the marker surface: a vertical bar with the key name
         bar_width = 6
-        self.width = bar_width + 80   # extra width for the label
+        self.width = bar_width + 80  # extra width for the label
         self.height = self.BAR_HEIGHT
 
         self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self._build_image()
 
         # Start just off the right edge, vertically aligned with the staff
-        staff_top_y = config.DISPLAY_HEIGHT / 2   # matches Staff.__init__
+        staff_top_y = config.DISPLAY_HEIGHT / 2  # matches Staff.__init__
         self.position = pygame.Vector2(config.DISPLAY_WIDTH, staff_top_y)
 
         self.direction = pygame.Vector2(-1, 0)
 
     def _build_image(self):
         """Render the marker bar and key name label onto self.image."""
-        self.image.fill((0, 0, 0, 0))   # transparent
+        self.image.fill((0, 0, 0, 0))  # transparent
 
         display_name = config.KEY_SIGNATURE_DISPLAY.get(
             self.incoming_key, self.incoming_key
@@ -223,13 +206,13 @@ class KeyChangeMarker(GameObject):
         # Colour: gold for sharp keys, steel-blue for flat keys, white for C/A minor
         key_sig = config.KEY_SIGNATURES.get(self.incoming_key, {})
         if any(v.endswith("#") for v in key_sig.values()):
-            bar_color = (255, 200, 50, 220)    # gold — sharp key
+            bar_color = (255, 200, 50, 220)  # gold — sharp key
             text_color = (255, 230, 100)
         elif any(v.endswith("b") for v in key_sig.values()):
-            bar_color = (100, 180, 255, 220)   # steel-blue — flat key
+            bar_color = (100, 180, 255, 220)  # steel-blue — flat key
             text_color = (150, 210, 255)
         else:
-            bar_color = (220, 220, 220, 200)   # light grey — C major / natural
+            bar_color = (220, 220, 220, 200)  # light grey — C major / natural
             text_color = (255, 255, 255)
 
         # Draw vertical bar
@@ -255,4 +238,50 @@ class KeyChangeMarker(GameObject):
         return pygame.Rect(self.position.x, self.position.y, self.width, self.height)
 
 
-class NPCGeneric(GameObject): ...
+class NPCGeneric(GameObject):
+    def __init__(
+        self,
+        game,
+        name,
+        sprite_path,
+        dialogues,
+        song_key,
+        health=100,
+        battle_intro=None,
+        battle_outro=None,
+    ):
+        self.game = game
+        self.name = name
+        self.dialogues = dialogues
+        self.song_key = song_key
+        self.health = health
+        self.battle_intro = battle_intro
+        self.battle_outro = battle_outro
+        self.load_image(sprite_path)
+        self.position = pygame.Vector2(0, 0)
+
+    def interact(self):
+        """Trigger dialogue then battle."""
+        # TODO - Perhaps keep this method abstract to each type of NPC implement their own interaction;
+        # Some might have few lines of dialogue before battle, other might offer a option to battle
+        # and others might require quest completion or, perhaps some kind of reputation or fame before facing off
+        # config.CURRENT_SONG = self.song_key
+        # self.game.battle_event = BattleEvent(self.game, npc=self)
+
+    def on_battle_update(self, battle_event):
+        """
+        Called every frame during battle. Default behaviour: do nothing.
+        Subclasses override this to add interference.
+        """
+        pass
+
+    # TODO - revise these to implement behavior during battle.
+    #   For example, instead of on_player_hit, eb certain scores threshold
+
+    def on_player_miss(self, battle_event):
+        """Called when the player misses a note. Default: no reaction."""
+        pass
+
+    def on_player_hit(self, battle_event):
+        """Called when the player hits a note. Default: no reaction."""
+        pass

@@ -1,5 +1,7 @@
-import pygame
 import config
+import pygame
+import maps
+
 from config import GameState
 from entities import Player
 from events import BattleEvent, load_sound
@@ -62,6 +64,12 @@ class Game:
         self.main_menu = MainMenu(self)
         self.options_menu = OptionsMenu(self)
         self.pause_menu = PauseMenu(self)
+
+        # Add maps
+        self.maps = maps.load_maps()
+        self.current_map = self.maps["town_square"]
+        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
+        self.player.position = self.current_map.spawn_point.copy()
 
     def reset_game(self):
         """Reset all game entities to their initial state without recreating pygame."""
@@ -230,6 +238,7 @@ class Game:
 
             # Only move player when actually playing (not paused)
             self.player.move()
+            self.camera.follow(self.player)
 
     def draw(self):
         """Draw based on current state."""
@@ -254,10 +263,13 @@ class Game:
 
     def draw_play(self):
         """Draw play screen."""
-        self.display_surface.blit(self.BACKGROUND, (0, 0))
-        self.player.draw()
+        self.current_map.draw(self.display_surface, self.camera)
+        # Draw player at camera-adjusted position
+        screen_pos = self.camera.apply(self.player.position)
+        self.display_surface.blit(self.player.image, screen_pos)
 
         if self.battle_event:
+            # Battle UI draws in screen space — no camera offset needed
             self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
             self.battle_event.draw()
             score_surface = self.game_font.render(
@@ -403,6 +415,11 @@ class Game:
     def _pause(self):
         """Legacy pause method - now handled by PAUSE state."""
         pass
+
+    def transition_to_map(self, map_key):
+        self.current_map = self.maps[map_key]
+        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
+        self.player.position = self.current_map.spawn_point.copy()
 
 
 def main():
