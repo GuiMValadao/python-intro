@@ -77,15 +77,7 @@ class Button(GameObject):
     def __init__(self, game, index):
         self.game = game
         self.index = index
-        self.key = [
-            config.NOTES_TO_KEYS["A"],
-            config.NOTES_TO_KEYS["B"],
-            config.NOTES_TO_KEYS["C"],
-            config.NOTES_TO_KEYS["D"],
-            config.NOTES_TO_KEYS["E"],
-            config.NOTES_TO_KEYS["F"],
-            config.NOTES_TO_KEYS["G"],
-        ][index]
+        self.key = list(config.NOTES_TO_KEYS.values())[index]
         self.load_image(config.ROOT_PATH / f"images/buttons/button{index+1}.png")
 
 

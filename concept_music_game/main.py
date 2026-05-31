@@ -297,7 +297,7 @@ class Game:
             correct_notes = full_hits + (
                 0.5 * half_hits
             )  # Score including fractional hits
-            total_notes = len(self.battle_event.song)
+            total_notes = self.battle_event.total_notes
             accuracy = (correct_notes / total_notes * 100) if total_notes > 0 else 0
         else:
             full_hits = 0

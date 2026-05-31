@@ -98,7 +98,7 @@ class BattleEvent:
 
         # Inject visual warning markers for Easy / Medium before actual key changes
         self.song = self._precompute_key_change_markers(processed_notes)
-
+        self.total_notes = self._count_notes(self.song)
         self.song_index = 0
         self.song_finished = False
 
@@ -125,6 +125,14 @@ class BattleEvent:
                         f"{frame_time}. All notes in a chord must share the same "
                         f"modifier (all natural, all sharp, or all flat)."
                     )
+
+    def _count_notes(self, song):
+        """Count total individual notes, excluding key change events."""
+        count = 0
+        for frame_time, event in song:
+            if not isinstance(event, dict):
+                count += len(event)
+        return count
 
     def _get_travel_frames(self):
         """
