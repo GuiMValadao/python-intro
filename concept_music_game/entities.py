@@ -1,6 +1,7 @@
 import config
 import pygame
 
+
 from math import sqrt
 
 
@@ -277,3 +278,6 @@ class NPCGeneric(GameObject):
     def on_player_hit(self, battle_event):
         """Called when the player hits a note. Default: no reaction."""
         pass
+
+    def interaction_rect(self):
+        return self.rect().inflate(40, 40)  # 20px buffer on each side

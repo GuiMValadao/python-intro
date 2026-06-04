@@ -65,7 +65,7 @@ class Game:
         self.pause_menu = PauseMenu(self)
 
         # Add maps
-        self.maps = maps.load_maps()
+        self.maps = maps.load_maps(self)
         self.current_map = self.maps["town_square"]
         self.camera = maps.Camera(self.current_map.width, self.current_map.height)
         self.player.position = self.current_map.spawn_point.copy()
@@ -179,15 +179,27 @@ class Game:
 
     def handle_play_input(self, event):
         """Handle play keyboard input."""
-        if event.key == pygame.K_p:
+
+        if event.key == pygame.K_p:  # Switches to pause menu
             self.set_state(config.GameState.PAUSE)
-        elif event.key == pygame.K_m:
+        elif event.key == pygame.K_m:  # Returns to main menu
             self.set_state(config.GameState.MENU)
-        elif event.key == pygame.K_b:
+        elif event.key == pygame.K_b:  # Starts a battle
             if self.battle_event is None:
                 self.battle_event = BattleEvent(self)
             else:
                 self.battle_event = None
+
+        if (
+            event.key == config.INTERACTION_KEY
+        ):  # Interacts with an NPC, starting a battle
+            if self.battle_event is None:
+                for npc in self.current_map.npcs:
+                    if self.player.rect().colliderect(npc.interaction_rect()):
+                        config.CURRENT_SONG = npc.song_key
+                        self.battle_event = BattleEvent(self, npc=npc)
+                        break
+
         elif event.key in config.get_all_playable_keys():
             # Normalize modifier to standard pygame constants
             if self.battle_event is None:
@@ -265,6 +277,7 @@ class Game:
     def draw_play(self):
         """Draw play screen."""
         self.current_map.draw(self.display_surface, self.camera)
+        self.current_map.draw_npcs(self.display_surface, self.camera)
         # Draw player at camera-adjusted position
         screen_pos = self.camera.apply(self.player.position)
         self.display_surface.blit(self.player.image, screen_pos)

@@ -67,18 +67,26 @@ class Map:
             display_surface.blit(npc.image, screen_pos)
 
 
-def load_maps():
-
+def load_maps(game):
+    marcos = TownNPC(
+        game=game,
+        name="Marcos",
+        sprite_path=config.ROOT_PATH / "images/npcs/name1/temp_npc1.png",
+        dialogues=[],  # fill in from dialogues.py later
+        song_key="song1",
+        health=100,
+    )
+    marcos.position = pygame.Vector2(100, 100)
     return {
         "town_square": Map(
             name="Town Square",
             background_path=config.ROOT_PATH / "images/maps/background1.png",
             width=2560,
             height=1440,
-            spawn_point=pygame.Vector2(400, 300),
+            spawn_point=pygame.Vector2(1280, 720),
             # Verify how apply this, do I create the instance here or just call the instance created elsewhere?
             npcs=[
-                #    TownNPC(...),
+                marcos,
             ],
         ),
         "market": Map(

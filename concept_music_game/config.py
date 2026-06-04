@@ -25,6 +25,7 @@ DIFFICULTY = "Medium"
 CURRENT_SONG = "song2"
 INSTRUMENT = "acoustic_guitar"
 GAME_FONT = "Bauhaus 93"
+INTERACTION_KEY = pygame.K_x
 
 NOTES_TO_KEYS = {
     "A": pygame.K_a,
@@ -140,6 +141,7 @@ _RESERVED_KEYS = {
     pygame.K_q,
     pygame.K_RETURN,
     pygame.K_ESCAPE,
+    INTERACTION_KEY,
 }
 
 
