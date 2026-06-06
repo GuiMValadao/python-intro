@@ -11,6 +11,7 @@ class GameState(Enum):
     PLAY = "play"
     SONG_END = "song_end"
     PAUSE = "pause"
+    DIALOGUE = "dialogue"
 
 
 DISPLAY_WIDTH = 1280

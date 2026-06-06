@@ -634,4 +634,83 @@ class BattleEvent:
             self.game.display_surface.blit(surf, rect)
 
 
-class TalkEvent: ...
+class TalkEvent:
+    def __init__(self, game, npc):
+        self.game = game
+        self.npc = npc
+        self.dialogue_index = 0
+        self.finished = False
+        self.start_battle = False
+        self.selected_option = 0  # for navigating choices
+
+    def is_choice(self):
+        current = self.npc.current_dialogues()[self.dialogue_index]
+        return isinstance(current, dict) and "choice" in current
+
+    def advance(self):
+        if self.is_choice():
+            return  # choices are resolved by select(), not advance()
+        self.dialogue_index += 1
+        if self.dialogue_index >= len(self.npc.current_dialogues()):
+            self.finished = True
+
+    def select(self):
+        """Confirm the currently highlighted option."""
+        current = self.npc.current_dialogues()[self.dialogue_index]
+        if self.selected_option == 0:  # first option = accept battle
+            self.start_battle = True
+        self.finished = True
+
+    def draw(self):
+        surface = self.game.display_surface
+        current = self.npc.current_dialogues()[self.dialogue_index]
+
+        # Box dimensions
+        box_margin = 40
+        box_height = 160
+        box_rect = pygame.Rect(
+            box_margin,
+            config.DISPLAY_HEIGHT - box_height - box_margin,
+            config.DISPLAY_WIDTH - box_margin * 2,
+            box_height,
+        )
+
+        # Semi-transparent background
+        box_surf = pygame.Surface((box_rect.width, box_rect.height), pygame.SRCALPHA)
+        box_surf.fill((0, 0, 0, 200))
+        surface.blit(box_surf, box_rect.topleft)
+
+        # Border
+        pygame.draw.rect(surface, (200, 200, 200), box_rect, 2)
+
+        # NPC name
+        name_font = pygame.font.SysFont(config.GAME_FONT, 22)
+        name_surf = name_font.render(self.npc.name, True, (255, 215, 0))
+        surface.blit(name_surf, (box_rect.x + 16, box_rect.y + 12))
+
+        text_font = pygame.font.SysFont(config.GAME_FONT, 26)
+        text_y = box_rect.y + 44
+
+        if isinstance(current, dict) and "choice" in current:
+            # Prompt text
+            prompt_surf = text_font.render(current["choice"], True, (255, 255, 255))
+            surface.blit(prompt_surf, (box_rect.x + 16, text_y))
+
+            # Options
+            for i, option in enumerate(current["options"]):
+                color = (255, 215, 0) if i == self.selected_option else (180, 180, 180)
+                prefix = "> " if i == self.selected_option else "  "
+                opt_surf = text_font.render(prefix + option, True, color)
+                surface.blit(opt_surf, (box_rect.x + 32, text_y + 36 + i * 34))
+        else:
+            # Plain dialogue line
+            text_surf = text_font.render(current, True, (255, 255, 255))
+            surface.blit(text_surf, (box_rect.x + 16, text_y))
+
+            # Advance prompt
+            hint_font = pygame.font.SysFont(config.GAME_FONT, 18)
+            hint_surf = hint_font.render("[ X ] Continue", True, (140, 140, 140))
+            surface.blit(
+                hint_surf,
+                (box_rect.right - hint_surf.get_width() - 16, box_rect.bottom - 26),
+            )

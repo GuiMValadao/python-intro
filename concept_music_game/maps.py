@@ -1,5 +1,6 @@
-import pygame
 import config
+import dialogues
+import pygame
 
 from chars import TownNPC
 
@@ -72,7 +73,7 @@ def load_maps(game):
         game=game,
         name="Marcos",
         sprite_path=config.ROOT_PATH / "images/npcs/name1/temp_npc1.png",
-        dialogues=[],  # fill in from dialogues.py later
+        dialogues=dialogues.marcos_dialogues,  # fill in from dialogues.py later
         song_key="song1",
         health=100,
     )

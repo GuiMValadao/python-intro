@@ -246,6 +246,7 @@ class NPCGeneric(GameObject):
         self.game = game
         self.name = name
         self.dialogues = dialogues
+        self.dialogue_state = "intro"
         self.song_key = song_key
         self.health = health
         self.battle_intro = battle_intro
@@ -253,13 +254,18 @@ class NPCGeneric(GameObject):
         self.load_image(sprite_path)
         self.position = pygame.Vector2(0, 0)
 
+    def current_dialogues(self):
+        return self.dialogues[self.dialogue_state]
+
     def interact(self):
         """Trigger dialogue then battle."""
         # TODO - Perhaps keep this method abstract to each type of NPC implement their own interaction;
         # Some might have few lines of dialogue before battle, other might offer a option to battle
         # and others might require quest completion or, perhaps some kind of reputation or fame before facing off
-        # config.CURRENT_SONG = self.song_key
-        # self.game.battle_event = BattleEvent(self.game, npc=self)
+        from events import TalkEvent
+
+        self.game.current_event = TalkEvent(self.game, npc=self)
+        self.game.set_state(config.GameState.DIALOGUE)
 
     def on_battle_update(self, battle_event):
         """
@@ -281,3 +287,7 @@ class NPCGeneric(GameObject):
 
     def interaction_rect(self):
         return self.rect().inflate(40, 40)  # 20px buffer on each side
+
+    def on_dialogue_end(self, start_battle):
+        """Called when dialogue finishes. Subclasses override to set next state."""
+        pass

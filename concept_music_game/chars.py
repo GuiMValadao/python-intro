@@ -8,7 +8,9 @@ from entities import MovingBlock, NPCGeneric
 class TownNPC(NPCGeneric):
     """Beginner opponent — no interference, just plays the song straight."""
 
-    pass  # inherits do-nothing defaults
+    def on_dialogue_end(self, finished):
+        if finished:
+            self.dialogue_state = "retry"
 
 
 class DistractingBusker(NPCGeneric):

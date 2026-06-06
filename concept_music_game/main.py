@@ -82,6 +82,9 @@ class Game:
         self.main_menu = MainMenu(self)
         self.options_menu = OptionsMenu(self)
         self.pause_menu = PauseMenu(self)
+        self.current_map = self.maps["town_square"]
+        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
+        self.player.position = self.current_map.spawn_point.copy()
 
     def run(self):
         """Main game loop using state management."""
@@ -133,6 +136,8 @@ class Game:
                 return self.handle_options_input(event)
             elif self.current_state == config.GameState.PLAY:
                 return self.handle_play_input(event)
+            elif self.current_state == config.GameState.DIALOGUE:
+                return self.handle_dialogue_input(event)
             elif self.current_state == config.GameState.PAUSE:
                 return self.handle_pause_input(event)
             elif self.current_state == config.GameState.SONG_END:
@@ -177,6 +182,30 @@ class Game:
         """Handle pause menu mouse input."""
         return self.pause_menu.handle_click(event)
 
+    def handle_dialogue_input(self, event):
+        talk = self.current_event
+        if talk.is_choice():
+            if event.key in (pygame.K_UP, pygame.K_DOWN):
+                talk.selected_option ^= 1
+            elif event.key == config.INTERACTION_KEY:
+                talk.select()
+                if talk.finished:
+                    talk.npc.on_dialogue_end(talk.finished)
+                    if talk.start_battle:
+                        from events import BattleEvent
+
+                        config.CURRENT_SONG = talk.npc.song_key
+                        self.battle_event = BattleEvent(self, npc=talk.npc)
+                    self.current_event = None
+                    self.set_state(config.GameState.PLAY)
+        else:
+            if event.key == config.INTERACTION_KEY:
+                talk.advance()
+                if talk.finished:
+                    self.current_event = None
+                    self.set_state(config.GameState.PLAY)
+        return True
+
     def handle_play_input(self, event):
         """Handle play keyboard input."""
 
@@ -196,8 +225,7 @@ class Game:
             if self.battle_event is None:
                 for npc in self.current_map.npcs:
                     if self.player.rect().colliderect(npc.interaction_rect()):
-                        config.CURRENT_SONG = npc.song_key
-                        self.battle_event = BattleEvent(self, npc=npc)
+                        npc.interact()
                         break
 
         elif event.key in config.get_all_playable_keys():
@@ -261,6 +289,8 @@ class Game:
             self.draw_options()
         elif self.current_state == config.GameState.PLAY:
             self.draw_play()
+        elif self.current_state == config.GameState.DIALOGUE:
+            self.draw_dialogue()
         elif self.current_state == config.GameState.PAUSE:
             self.draw_pause()
         elif self.current_state == config.GameState.SONG_END:
@@ -290,6 +320,10 @@ class Game:
                 f"Score: {self.battle_event.score}", True, (255, 255, 255)
             )
             self.display_surface.blit(score_surface, (20, 20))
+
+    def draw_dialogue(self):
+        self.draw_play()  # world still visible behind the text box
+        self.current_event.draw()
 
     def draw_song_end(self):
         """Draw song end screen with statistics."""
