@@ -586,17 +586,28 @@ class PauseMenu(Menu):
         self.create_button(
             "resume", "Resume", config.DISPLAY_HEIGHT // 4 - 60, color=(100, 150, 100)
         )
+        self.create_button(
+            "training",
+            "Training",
+            config.DISPLAY_HEIGHT // 4 + 20,
+            color=(80, 80, 150),
+        )
+        self.create_button(
+            "menu",
+            "Return to Menu",
+            config.DISPLAY_HEIGHT // 4 + 100,
+            color=(150, 100, 100),
+        )
 
-        y_offset = config.DISPLAY_HEIGHT // 4 + 20
-        for i, song_key in enumerate(sorted(SONGS.keys())):
-            display_name = f"Song: {song_key.replace('song', '').upper()}"
-            color = (
-                (100, 100, 200) if song_key == config.CURRENT_SONG else (80, 80, 150)
-            )
-            self.create_button(song_key, display_name, y_offset + i * 70, color=color)
+        self.sub_pages = {"training": TrainingMenu(game)}
+        self.active_sub_page = None
 
-        quit_y = config.DISPLAY_HEIGHT // 4 + 20 + len(SONGS) * 70
-        self.create_button("menu", "Return to Menu", quit_y, color=(150, 100, 100))
+    def _open_sub_page(self, name):
+        self.active_sub_page = self.sub_pages[name]
+        self.active_sub_page.on_open()
+
+    def _close_sub_page(self):
+        self.active_sub_page = None
 
     def draw(self, display_surface):
         overlay = pygame.Surface(
@@ -605,6 +616,10 @@ class PauseMenu(Menu):
         overlay.fill((0, 0, 0, 128))
         display_surface.blit(overlay, (0, 0))
 
+        if self.active_sub_page:
+            self.active_sub_page.draw(display_surface)
+            return
+
         title = self.game.game_font.render("PAUSED", True, (255, 255, 255))
         display_surface.blit(
             title, title.get_rect(center=(config.DISPLAY_WIDTH // 2, 50))
@@ -612,17 +627,7 @@ class PauseMenu(Menu):
 
         for i, button_name in enumerate(self.button_names):
             button_data = self.buttons[button_name]
-
-            if button_name in SONGS:
-                button_data["color"] = (
-                    (100, 200, 100)
-                    if button_name == config.CURRENT_SONG
-                    else (80, 80, 150)
-                )
-                self._redraw_button(button_name)
-
             display_surface.blit(button_data["surface"], button_data["rect"].topleft)
-
             if i == self.selected_index:
                 hl = pygame.Surface(
                     (self.button_width, self.button_height), pygame.SRCALPHA
@@ -631,15 +636,173 @@ class PauseMenu(Menu):
                 display_surface.blit(hl, button_data["rect"].topleft)
 
     def handle_click(self, event):
+        if self.active_sub_page:
+            result = self.active_sub_page.handle_click(event)
+            if result == "back":
+                self._close_sub_page()
+            return True
+
         for name, data in self.buttons.items():
             if data["rect"].collidepoint(event.pos):
                 if name == "resume":
                     self.game.set_state(GameState.PLAY)
                     return True
-                elif name in SONGS:
-                    config.CURRENT_SONG = name
+                elif name == "training":
+                    self._open_sub_page("training")
                     return True
                 elif name == "menu":
                     self.game.set_state(GameState.MENU)
                     return True
         return True
+
+    def handle_key_press(self, event):
+        if self.active_sub_page:
+            result = self.active_sub_page.handle_key_press(event)
+            if result == "back":
+                self._close_sub_page()
+            return True
+        if event.key == pygame.K_ESCAPE:
+            self.game.set_state(GameState.PLAY)
+            return True
+        return super().handle_key_press(event)
+
+    def handle_mouse_motion(self, event):
+        if self.active_sub_page:
+            self.active_sub_page.handle_mouse_motion(event)
+        else:
+            super().handle_mouse_motion(event)
+
+
+# ---------------------------------------------------------------------------
+# Training sub-page (song selection, paginated)
+# ---------------------------------------------------------------------------
+
+
+class TrainingMenu(SubMenu):
+    """
+    Song selection sub-page, opened from the Pause Menu.
+    Displays songs in fixed-size pages with Prev/Next navigation.
+
+    Future hook: songs could carry an "unlocked" flag (e.g. SONGS[key]["unlocked"])
+    and this menu could grey out / skip locked entries.
+    """
+
+    SONGS_PER_PAGE = 5
+
+    def __init__(self, game):
+        super().__init__(game, title="Training")
+        self.button_width = 280
+        self.song_keys = sorted(SONGS.keys())
+        self.page = 0
+        self._build_page_buttons()
+
+    @property
+    def total_pages(self):
+        return max(1, (len(self.song_keys) - 1) // self.SONGS_PER_PAGE + 1)
+
+    def on_open(self):
+        super().on_open()
+        self.page = 0
+        self._build_page_buttons()
+
+    def _build_page_buttons(self):
+        """Rebuild song + navigation buttons for the current page."""
+        self.buttons = {}
+        self.button_names = []
+
+        start = self.page * self.SONGS_PER_PAGE
+        page_songs = self.song_keys[start : start + self.SONGS_PER_PAGE]
+
+        y_offset = config.DISPLAY_HEIGHT // 4 - 40
+        for i, song_key in enumerate(page_songs):
+            display_name = f"Song: {song_key.replace('song', '').upper()}"
+            color = (
+                (100, 200, 100) if song_key == config.CURRENT_SONG else (80, 80, 150)
+            )
+            self.create_button(song_key, display_name, y_offset + i * 70, color=color)
+
+        nav_y = y_offset + self.SONGS_PER_PAGE * 70 + 10
+        if self.page > 0:
+            self.create_button(
+                "prev",
+                "< Prev",
+                nav_y,
+                color=(90, 90, 90),
+                x_center=config.DISPLAY_WIDTH // 3 - 160,
+            )
+        if self.page < self.total_pages - 1:
+            self.create_button(
+                "next",
+                "Next >",
+                nav_y,
+                color=(90, 90, 90),
+                x_center=2 * config.DISPLAY_WIDTH // 3 + 160,
+            )
+
+        self.create_button("back", "Back", nav_y + 80, color=(128, 128, 128))
+
+    def draw(self, display_surface):
+        # No fill/overlay here — PauseMenu already darkens the background.
+        title_surf = self.game.game_font.render(self.title, True, (255, 255, 255))
+        display_surface.blit(
+            title_surf, title_surf.get_rect(center=(config.DISPLAY_WIDTH // 2, 50))
+        )
+
+        for i, button_name in enumerate(self.button_names):
+            button_data = self.buttons[button_name]
+            display_surface.blit(button_data["surface"], button_data["rect"].topleft)
+            if i == self.selected_index:
+                hl = pygame.Surface(
+                    (button_data["rect"].width, button_data["rect"].height),
+                    pygame.SRCALPHA,
+                )
+                hl.fill((255, 255, 255, 100))
+                display_surface.blit(hl, button_data["rect"].topleft)
+
+        # Page indicator
+        nav_y = (config.DISPLAY_HEIGHT // 4 - 40) + self.SONGS_PER_PAGE * 70 + 10
+        page_font = pygame.font.SysFont(config.GAME_FONT, 22)
+        page_surf = page_font.render(
+            f"Page {self.page + 1} / {self.total_pages}", True, (200, 200, 200)
+        )
+        display_surface.blit(
+            page_surf,
+            page_surf.get_rect(center=(config.DISPLAY_WIDTH // 2, nav_y + 20)),
+        )
+
+    def handle_click(self, event):
+        for name, data in self.buttons.items():
+            if data["rect"].collidepoint(event.pos):
+                if name == "back":
+                    return "back"
+                elif name == "prev":
+                    self.page -= 1
+                    self._build_page_buttons()
+                    self.selected_index = 0
+                    return True
+                elif name == "next":
+                    self.page += 1
+                    self._build_page_buttons()
+                    self.selected_index = 0
+                    return True
+                elif name in SONGS:
+                    config.CURRENT_SONG = name
+                    self._build_page_buttons()  # refresh highlight color
+                    return True
+        return True
+
+    def handle_key_press(self, event):
+        if event.key == pygame.K_ESCAPE:
+            return "back"
+        elif event.key == pygame.K_LEFT and self.page > 0:
+            self.page -= 1
+            self._build_page_buttons()
+            self.selected_index = 0
+            return True
+        elif event.key == pygame.K_RIGHT and self.page < self.total_pages - 1:
+            self.page += 1
+            self._build_page_buttons()
+            self.selected_index = 0
+            return True
+        # UP/DOWN navigation and RETURN→handle_click are handled by the base class
+        return super().handle_key_press(event)

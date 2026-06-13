@@ -412,7 +412,7 @@ SONG_6 = {
         (690, [EXTENDED_NOTE_NAMES["D3"]]),
         (700, [EXTENDED_NOTE_NAMES["D3"]]),
         (710, [EXTENDED_NOTE_NAMES["D3"]]),
-        (720, [EXTENDED_NOTE_NAMES["F3"]]),  # F3#
+        (720, [EXTENDED_NOTE_NAMES["F3"]]),
         (730, [EXTENDED_NOTE_NAMES["D3"]]),
         (740, [EXTENDED_NOTE_NAMES["G3"]]),
         (750, [EXTENDED_NOTE_NAMES["D3"]]),
