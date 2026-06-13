@@ -1,0 +1,66 @@
+Mundo 'normal'? O personagem aprende a tocar instrumentos e evolui em sua carreira musical? O objetivo geral/final poderia algo relacionado à história do personagem principal, fazendo a história do jogo ser voltada mais às personagens que ao mundo.
+
+
+Mundo sobrenatural? Inimigos/monstros que atacam usando a música, e devem ser derrotados usando música. Objetivo principal seria descobrir uma maneira de acabar com uma possível invasão/ construir uma possível coabitação com os 'inimigos'. Neste cenário, músicos seriam equivalentes a soldados/guerreiros/heróis, e haveriam múltiplas escolas/mentores de instrumentos. O jogador encontra um mentor e aprende a tocar algum/alguns instrumentos para enfrentar os inimigos/monstros visando cumprir o objetivo. Assim, a história focaria mais no mundo do que nos personagens.
+
+
+Meio termo: No início, o jogador encontra-se em um mundo comum, sem indícios de coisas sobrenaturais. Nessa parte, ele começa a aprender música, interage com outros personagens para fundamentar o personagem e seu lugar no mundo com a intenção de dar importância aos personagens. Então, algo(a ser definido) ocorre, e após uma transição, possivelmente envolvendo o mistério dos acontecimentos, a parte sobrenatural vem à tona. Então, o jogador deve decidir entre se opor aos acontecimentos sobrenaturais ou se alinhar a eles, o que poderia resultar ou na erradicação do elemento sobrenatural do mundo ou na coexistência. ** Aqui, pode-se estabelecer que alguns dos personagens introduzidos no início na verdade não são humanos, adicionando tensão à história. ** Nesse caso, a música poderia ser tanto uma arma quanto uma fraqueza das entidades sobrenaturais. 
+
+--------------------------------------------------------------------------
+
+A história é dividida em três atos:
+	1) Mundo comum('real'), onde as mecânicas do jogo são apresentadas ao jogador e são estabelecidas conexões com demais personagens
+	2) Estranheza, onde o mundo real começa a apresentar sinais de eventos e acontecimentos sobrenaturais. Pode terminar em um plot twist significativo, pra dar partida para o ato 3
+	3) Resolução, onde o jogador, conhecendo as nuances do jogo e da história, vive no meio do sobrenatural, e eventualmente chega a um encerramento (que dependerá da história)
+
+PERSONAGENS
+- 4 Personagens jogáveis, três deles tendo uma história de fundo definida e instrumento particular, e ou quarto permitindo que o jogador faça sua escolha (talvez inclusive de história de fundo).
+
+	- 1 - Guitarrista
+	- 2 - Baterista
+	- 3 - Baixista
+	- 4 - Coringa
+
+** Entidades sobrenaturais - fenômenos sonoros que ganharam consciência. FALTA PENSAR NO MOTIVO PARA O CONFLITO DO ATO 2 "Perhaps music became too commercialized, too mechanical, too divorced from genuine expression, and that distortion is experienced by the entities as something like pain or aggression" Elaborar de forma abstrata na história e em pedaços da lore essa razão real do agitamento das entidades, e criar uma razão superficial e trivial que pode ser resolvida sem engajar com essa direção. A consequência de se opor às entidades, para o fim do ato 3, é a extinção da música.
+
+
+? Talvez criar um prelúdio breve pra apresentar o personagem escolhido pelo jogador?
+
+Ato 1
+
+**Decidir entre deixar o jogador explorar um pouco no começo antes de apresentar um mentor/escola de música ou começar o ato 1 apresentando o mentor e começando a ensinar as mecânicas do jogo
+
+O tom desse primeiro ato é leve e descontraído (com o encerramento destoando e quebrando o 'marasmo')
+
+Nesta parte, os 4 personagens principais (e talvez outros que não são selecionáveis) se conhecem e estabelecem amizade, participam de 'batalhas' de música com outras pessoas da cidade e talvez fazem shows e audições
+
+Ao final dessa parte, um dos personagens (fora os 4 principais) morre de causas misteriosas e o lado sobrenatural do mundo aparece pela primeira vez, estabelecendo o final do Ato 1 e início do ato 2.
+
+Ato 2
+
+O tom para esse ato deve ser voltado para o mistério e exploração, com os personagens principais descobrindo a parte sobrenatural do mundo e explorando-a. 
+
+Neste ato, pode-se ainda ter algumas das 'batalhas' entre músicos, e em shows, e começam a surgir batalhas contra as entidades sobrenaturais. ** Talvez criar uma espécie de dungeon nesse ato para explorar e exibir a lore do mundo?
+
+O ato 3 pode conter duas versões diferentes, dependendo de vários fatores. Se o jogador não é o Coringa, e se a exploração tiver fornecido ao jogador conhecimento suficiente sobre o mundo, o jogador pode escolher tomar o lado do sobrenatural. Caso contrário, ele será contra o sobrenatural
+
+Ao final do ato 2, o Coringa, se não for o jogador, se revela como sendo parte do sobrenatural. Se o jogador tiver escolhido o lado do sobrenatural, eles seguem para seus propósitos próprios (o objetivo das entidades sobrenaturais ainda precisa ser definido).
+Caso o jogador tenha escolhido ser contra o sobrenatural, o Coringa se revela como um sobrenatural e ocorre uma batalha contra o jogador. Em qualquer caso, isso marca o encerramento do Ato 2.
+
+Caso o jogador seja o Coringa, ele revela que é sobrenatural, e abandona os outros personagens após uma batalha contra eles, o que encerra o Ato 2 para essa condição. 
+
+*** Necessário decidir sobre vários aspectos da história para definir como os três caminhos do Ato 3 vão ocorrer. Entre eles, o mais importante é o objetivo das entidades sobrenaturais. Se o objetivo for benigno, como coexistência pacífica, então o jogador ser contra as entidades deve ser desenvolvido como um caminho 'mal', mas com as entidades não sendo somente vítimas. Se o objetivo das entidades for maligno, como domínio do planeta ou extinção dos humanos, então se posicionar contra o sobrenatural seria o caminho bom.
+
+Ato 3 - Extinção
+
+Nesse ato, o jogador escolheu ser contra o sobrenatural. O tom desse ato é mais pesado, e voltado à ação, com os mistérios já tendo sido, em sua maior parte, revelados no Ato 2. 
+
+A consequência final desse ato é a extinção da música. A música que agitou/feriu as entidades permanece, mas é uma música sem alma, e com o fim das entidades, não surgem mais movimentos musicais diferentes.
+
+Ato 3 - Coexistência
+
+Nesse ato, o jogador atinge fama suficiente para inspirar outros músicos, e a música danosa às entidades para de ser lucrativa, o que os leva a se acalmarem por algum tempo. Possivelmente, No final, mostrar algum sinal que o que levou as entidades a se agitarem ainda existe, e que com o tempo o que ocorreu pode ocorrer novamente.
+
+Ato 3 - Coringa
+
+?????
