@@ -541,6 +541,7 @@ class KeyBindingsMenu(SubMenu):
                 i = _NOTE_KEYS.index(self.listening_for)
                 y = _TABLE_TOP + i * _ROW_HEIGHT
                 self._make_key_button(self.listening_for, y)
+                self.game._rebuild_note_sounds()  # keep explore-mode sounds in sync
                 self.error_message = None
             self.listening_for = None
             return True

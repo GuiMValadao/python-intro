@@ -38,6 +38,20 @@ class Game:
         self.current_state = config.GameState.MENU
         self.battle_event = None
 
+        self._rebuild_note_sounds()
+
+        # Initialize menus
+        self.main_menu = MainMenu(self)
+        self.options_menu = OptionsMenu(self)
+        self.pause_menu = PauseMenu(self)
+
+        # Add maps
+        self.maps = maps.load_maps(self)
+        self.current_map = self.maps["town_square"]
+        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
+        self.player.position = self.current_map.spawn_point.copy()
+
+    def _rebuild_note_sounds(self):
         # Load sounds for note keys using key bindings from config
         # Includes natural notes, sharps (SHIFT+key), and flats (CTRL+key)
         self.note_sounds = {}
@@ -59,16 +73,6 @@ class Game:
                 self.note_sounds[(key, config.FLAT_MODIFIER)] = load_sound(
                     note_name + "b", freq_flat
                 )
-        # Initialize menus
-        self.main_menu = MainMenu(self)
-        self.options_menu = OptionsMenu(self)
-        self.pause_menu = PauseMenu(self)
-
-        # Add maps
-        self.maps = maps.load_maps(self)
-        self.current_map = self.maps["town_square"]
-        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
-        self.player.position = self.current_map.spawn_point.copy()
 
     def reset_game(self):
         """Reset all game entities to their initial state without recreating pygame."""
@@ -317,7 +321,7 @@ class Game:
             self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
             self.battle_event.draw()
             score_surface = self.game_font.render(
-                f"Score: {self.battle_event.score}", True, (255, 255, 255)
+                f"Score: {int(self.battle_event.score)}", True, (255, 255, 255)
             )
             self.display_surface.blit(score_surface, (20, 20))
 
@@ -367,13 +371,28 @@ class Game:
         stats_y = 180
         line_height = 50
 
+        # Final Score
+        song_score = large_font.render(
+            f"Score: {int(self.battle_event.score)}", True, (255, 215, 0)
+        )
+        self.display_surface.blit(
+            song_score,
+            (
+                (config.DISPLAY_WIDTH - song_score.get_width()) // 2,
+                stats_y,
+            ),
+        )
+
         # Perfect hits (full score)
         perfect_text = medium_font.render(
             f"Perfect Hits: {full_hits}", True, (100, 255, 100)
         )
         self.display_surface.blit(
             perfect_text,
-            ((config.DISPLAY_WIDTH - perfect_text.get_width()) // 2, stats_y),
+            (
+                (config.DISPLAY_WIDTH - perfect_text.get_width()) // 2,
+                stats_y + line_height,
+            ),
         )
 
         # Good hits (half score)
@@ -382,7 +401,7 @@ class Game:
             good_text,
             (
                 (config.DISPLAY_WIDTH - good_text.get_width()) // 2,
-                stats_y + line_height,
+                stats_y + line_height * 2,
             ),
         )
 
@@ -394,7 +413,7 @@ class Game:
             total_text,
             (
                 (config.DISPLAY_WIDTH - total_text.get_width()) // 2,
-                stats_y + line_height * 2,
+                stats_y + line_height * 3,
             ),
         )
 
@@ -411,7 +430,7 @@ class Game:
             accuracy_text,
             (
                 (config.DISPLAY_WIDTH - accuracy_text.get_width()) // 2,
-                stats_y + line_height * 3,
+                stats_y + line_height * 4,
             ),
         )
 
@@ -423,20 +442,20 @@ class Game:
             continue_text,
             (
                 (config.DISPLAY_WIDTH - continue_text.get_width()) // 2,
-                stats_y + line_height * 5,
+                stats_y + line_height * 6,
             ),
         )
 
-        menu_text = small_font.render(
-            "Press M to return to menu", True, (200, 200, 200)
-        )
-        self.display_surface.blit(
-            menu_text,
-            (
-                (config.DISPLAY_WIDTH - menu_text.get_width()) // 2,
-                stats_y + line_height * 5 + 50,
-            ),
-        )
+        # menu_text = small_font.render(
+        #     "Press M to return to menu", True, (200, 200, 200)
+        # )
+        # self.display_surface.blit(
+        #     menu_text,
+        #     (
+        #         (config.DISPLAY_WIDTH - menu_text.get_width()) // 2,
+        #         stats_y + line_height * 5 + 50,
+        #     ),
+        # )
 
     def draw_pause(self):
         """Draw pause menu over the game."""

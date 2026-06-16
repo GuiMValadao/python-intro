@@ -85,7 +85,8 @@ class BattleEvent:
         self._load_all_sounds()
 
         self.button_states = {
-            key: {"lit": False, "time": 0} for key in config.get_all_playable_keys()
+            key: {"lit": False, "time": 0, "miss": False, "miss_time": 0}
+            for key in config.get_all_playable_keys()
         }
 
         # Load song and apply starting key signature
@@ -102,6 +103,13 @@ class BattleEvent:
         self.song_index = 0
         self.song_finished = False
 
+        # Tension mechanic values
+        self.score = 0
+        self.full_hits = 0
+        self.half_hits = 0
+        self.tension = 0.0  # 0.0 → 1.0
+        self.tension_maxed = False  # tracks whether we're in the bonus zone
+
     # ------------------------------------------------------------------
     # Song loading helpers
     # ------------------------------------------------------------------
@@ -116,8 +124,13 @@ class BattleEvent:
                 continue  # key change event — not a note chord
             if len(event) > 1:
                 modifiers = set()
-                for note_key in event:
-                    mod = note_key[1] if isinstance(note_key, tuple) else 0
+                for note_name in event:
+                    if note_name.endswith("#"):
+                        mod = config.SHARP_MODIFIER
+                    elif note_name.endswith("b"):
+                        mod = config.FLAT_MODIFIER
+                    else:
+                        mod = 0
                     modifiers.add(mod)
                 if len(modifiers) > 1:
                     raise ValueError(
@@ -325,7 +338,11 @@ class BattleEvent:
                     self._spawn_key_change_marker(event["key_change_warning"])
             else:
                 # Regular note list (chord or single note)
-                for note_key in event:
+                for note_name in event:
+                    note_key = config.EXTENDED_NOTE_NAMES.get(note_name)
+                    if note_key is None:
+                        continue  # shouldn't happen — defensive guard against bad song data
+
                     base_key = note_key[0] if isinstance(note_key, tuple) else note_key
                     target_button = next(
                         (b for b in self.staff.buttons if b.key == base_key), None
@@ -354,6 +371,12 @@ class BattleEvent:
         """Advance all moving objects and remove those that have passed the target."""
         for block in self.moving_blocks:
             block.update()
+
+        # Blocks leaving the left edge were ignored — apply tension penalty
+        for block in self.moving_blocks:
+            if block.position.x < 0:
+                self._register_ignored_note(block)
+
         self.moving_blocks = [b for b in self.moving_blocks if b.position.x >= 0]
 
         for marker in self.key_change_markers:
@@ -369,6 +392,10 @@ class BattleEvent:
                 state["time"] -= 1
                 if state["time"] <= 0:
                     state["lit"] = False
+            if state["miss"]:
+                state["miss_time"] -= 1
+                if state["miss_time"] <= 0:
+                    state["miss"] = False
 
     def _update_indicators(self):
         """Tick down the key-change notification banner timer."""
@@ -435,27 +462,29 @@ class BattleEvent:
         return None
 
     def _register_hit(self, block):
-        """Award points, play the note sound, and light up the button."""
         precision = self.calculate_precision(block.rect(), block.target.rect())
-        if precision >= 80.0:
-            self.score += 1
-            self.full_hits += 1
-        else:
-            self.score += 0.5
-            self.half_hits += 1
 
+        was_maxed = self.tension >= 1.0
+
+        if precision >= 80.0:
+            self.score += 1 * (1 + self.tension)
+            self.full_hits += 1
+            self.tension = min(1.0, self.tension + 0.15)
+        else:
+            self.score += 0.5 * (1 + self.tension)
+            self.half_hits += 1
+            self.tension = min(1.0, self.tension + 0.08)
+
+        self.tension_maxed = self.tension >= 1.0
+
+        # Sound and button highlight — unchanged
         base_key = (
             block.note_key[0] if isinstance(block.note_key, tuple) else block.note_key
         )
-        # Resolve the sound that should actually play
         key_sig = config.get_key_signature()
         natural_name = config.NOTE_NAMES[base_key]
         if isinstance(block.note_key, tuple):
-            sound_key = (
-                block.note_key
-                if isinstance(block.note_key, tuple)
-                else (block.note_key, 0)
-            )
+            sound_key = block.note_key
         else:
             sounding_name = key_sig.get(natural_name, natural_name)
             sound_key = self._note_name_to_sound_key(sounding_name, base_key)
@@ -467,19 +496,38 @@ class BattleEvent:
         self.button_states[base_key]["time"] = 10
         self.moving_blocks.remove(block)
 
-        # NPC on-hit note interference/interaction
         if self.npc:
             self.npc.on_player_hit(self)
 
     def _register_miss(self, key, resolved_note):
-        """Play a distorted version of whatever note the player pressed."""
         sound_key = self._note_name_to_sound_key(resolved_note, key)
         if sound_key in self.distorted_sounds:
             self.distorted_sounds[sound_key].play()
 
-        # NPC on-missed note interference/interaction
+        self.button_states[key]["miss"] = True
+        self.button_states[key]["miss_time"] = 10
+
+        if self.tension >= 1.0:
+            self.score = max(0, self.score - 1)  # penalty for breaking max tension
+            self.tension = 0.0
+        else:
+            self.tension = max(0.0, self.tension - 0.25)
+
+        self.tension_maxed = False
+
         if self.npc:
             self.npc.on_player_miss(self)
+
+    def _register_ignored_note(self, block):
+        """
+        Apply a softer tension penalty for notes that passed without being hit.
+        No score penalty and no button feedback — the player simply didn't engage.
+        """
+        if self.tension >= 1.0:
+            self.tension = max(0.0, self.tension - 0.25)
+            self.tension_maxed = False
+        else:
+            self.tension = max(0.0, self.tension - 0.125)
 
     def _check_song_completion(self):
         if self.song_index >= len(self.song) and len(self.moving_blocks) == 0:
@@ -508,15 +556,16 @@ class BattleEvent:
         self._draw_moving_objects()
         self._draw_key_signature_hud()
         self._draw_key_change_banner()
+        self._draw_tension_bar()
 
     def _draw_staff_and_buttons(self):
         """Draw the staff and all buttons, with highlight for lit buttons."""
         self.staff.draw()
         for button in self.staff.buttons:
+            button.draw()
+            self._draw_button_note_label(button)
+
             if self.button_states[button.key]["lit"]:
-                self.game.display_surface.blit(
-                    button.image, (button.position.x, button.position.y)
-                )
                 highlight = pygame.Surface(
                     (button.width, button.height), pygame.SRCALPHA
                 )
@@ -524,10 +573,14 @@ class BattleEvent:
                 self.game.display_surface.blit(
                     highlight, (button.position.x, button.position.y)
                 )
-            else:
-                # Show the altered note name on the button if key sig changes it
-                button.draw()
-                self._draw_button_note_label(button)
+            elif self.button_states[button.key]["miss"]:
+                highlight = pygame.Surface(
+                    (button.width, button.height), pygame.SRCALPHA
+                )
+                highlight.fill((0, 0, 0, 180))
+                self.game.display_surface.blit(
+                    highlight, (button.position.x, button.position.y)
+                )
 
     def _draw_button_note_label(self, button):
         """
@@ -632,6 +685,60 @@ class BattleEvent:
             surf.set_alpha(alpha)
             rect = surf.get_rect(center=(cx, cy))
             self.game.display_surface.blit(surf, rect)
+
+    def _draw_tension_bar(self):
+        """
+        Draw a vertical tension meter to the left of the staff.
+        Colour shifts from steel-blue (empty) to gold (full).
+        Pulses with a white glow when maxed.
+        """
+        bar_x = 12
+        bar_width = 16
+        # Align with the staff — 7 buttons × 30px spacing + one button height (32px)
+        bar_bottom = int(config.DISPLAY_HEIGHT / 2) + 6 * 30 + 32
+        bar_max_height = 6 * 30 + 32  # same span as the staff
+        bar_height = int(bar_max_height * self.tension)
+
+        # Background track
+        track_rect = pygame.Rect(
+            bar_x, bar_bottom - bar_max_height, bar_width, bar_max_height
+        )
+        pygame.draw.rect(
+            self.game.display_surface, (40, 40, 60), track_rect, border_radius=4
+        )
+
+        if bar_height > 0:
+            # Lerp colour: blue (0) → gold (1)
+            t = self.tension
+            r = int(100 + (255 - 100) * t)
+            g = int(150 + (215 - 150) * t)
+            b = int(255 + (0 - 255) * t)
+            fill_rect = pygame.Rect(
+                bar_x, bar_bottom - bar_height, bar_width, bar_height
+            )
+            pygame.draw.rect(
+                self.game.display_surface, (r, g, b), fill_rect, border_radius=4
+            )
+
+        # Glow when maxed
+        if self.tension_maxed:
+            glow = pygame.Surface((bar_width + 8, bar_max_height + 8), pygame.SRCALPHA)
+            glow.fill((255, 215, 0, 60))
+            self.game.display_surface.blit(
+                glow, (bar_x - 4, bar_bottom - bar_max_height - 4)
+            )
+
+        # Label
+        font = pygame.font.SysFont(config.GAME_FONT, 16)
+        label = font.render("TENSION", True, (180, 180, 180))
+        rotated = pygame.transform.rotate(label, 90)
+        self.game.display_surface.blit(
+            rotated,
+            (
+                bar_x + bar_width + 4,
+                bar_bottom - (bar_max_height + rotated.get_height()) // 2,
+            ),
+        )
 
 
 class TalkEvent:
