@@ -1,6 +1,7 @@
 import config
-import pygame
 import maps
+import save
+import pygame
 
 from entities import Player
 from events import BattleEvent, load_sound
@@ -38,6 +39,10 @@ class Game:
         self.current_state = config.GameState.MENU
         self.battle_event = None
 
+        self.high_scores = {}
+        self.songs_played = 0
+        self.current_slot = None
+        self.slot_select_menu = None
         self._rebuild_note_sounds()
 
         # Initialize menus
@@ -90,6 +95,11 @@ class Game:
         self.camera = maps.Camera(self.current_map.width, self.current_map.height)
         self.player.position = self.current_map.spawn_point.copy()
 
+    def _save_if_slot_active(self):
+        """Write to the active slot if one is loaded."""
+        if self.current_slot is not None:
+            save.write_save(self.current_slot, self)
+
     def run(self):
         """Main game loop using state management."""
         running = True
@@ -119,6 +129,12 @@ class Game:
             # Reset options menu selection
             self.options_menu.selected_index = 0
             self.options_menu.hovered_button = None
+        elif new_state == config.GameState.SLOT_SELECT:
+            if self.slot_select_menu is None:
+                from menu import SlotSelectMenu
+
+                self.slot_select_menu = SlotSelectMenu(self)
+            self.slot_select_menu.on_open()
         elif new_state == config.GameState.PAUSE:
             # Reset pause menu selection
             self.pause_menu.selected_index = 0
@@ -136,6 +152,8 @@ class Game:
 
             if self.current_state == config.GameState.MENU:
                 return self.handle_menu_input(event)
+            elif self.current_state == config.GameState.SLOT_SELECT:
+                return self.handle_slot_select_input(event)
             elif self.current_state == config.GameState.OPTIONS:
                 return self.handle_options_input(event)
             elif self.current_state == config.GameState.PLAY:
@@ -150,15 +168,22 @@ class Game:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.current_state == config.GameState.MENU:
                 return self.handle_menu_click(event)
+            elif self.current_state == config.GameState.SLOT_SELECT:
+                return self.slot_select_menu.handle_click(event)
             elif self.current_state == config.GameState.OPTIONS:
                 return self.handle_options_click(event)
             elif self.current_state == config.GameState.PAUSE:
                 return self.handle_pause_click(event)
 
         elif event.type == pygame.MOUSEMOTION:
+            if self.current_state == config.GameState.SLOT_SELECT:
+                self.slot_select_menu.handle_mouse_motion(event)
             return self.handle_mouse_motion(event)
 
         return True
+
+    def handle_slot_select_input(self, event):
+        return self.slot_select_menu.handle_key_press(event)
 
     def handle_menu_input(self, event):
         """Handle menu keyboard input."""
@@ -248,13 +273,20 @@ class Game:
 
     def handle_song_end_input(self, event):
         """Handle song end screen input."""
+        if self.battle_event and self.current_slot is not None:
+            song_key = config.CURRENT_SONG
+            current_score = int(self.battle_event.score)
+            if current_score > self.high_scores.get(song_key, 0):
+                self.high_scores[song_key] = current_score
+                self.songs_played = len(
+                    [s for s in self.high_scores if self.high_scores[s] > 0]
+                )
+                save.write_save(self.current_slot, self)
         if event.key == pygame.K_RETURN:
             # Return to the game world
             self.set_state(config.GameState.PLAY)
             self.battle_event = None
-        if event.key == pygame.K_m:
-            self.reset_game()
-            self.set_state(config.GameState.MENU)
+
         return True
 
     def update(self):
@@ -289,6 +321,8 @@ class Game:
         """Draw based on current state."""
         if self.current_state == config.GameState.MENU:
             self.draw_menu()
+        elif self.current_state == config.GameState.SLOT_SELECT:
+            self.slot_select_menu.draw(self.display_surface)
         elif self.current_state == config.GameState.OPTIONS:
             self.draw_options()
         elif self.current_state == config.GameState.PLAY:
@@ -445,17 +479,6 @@ class Game:
                 stats_y + line_height * 6,
             ),
         )
-
-        # menu_text = small_font.render(
-        #     "Press M to return to menu", True, (200, 200, 200)
-        # )
-        # self.display_surface.blit(
-        #     menu_text,
-        #     (
-        #         (config.DISPLAY_WIDTH - menu_text.get_width()) // 2,
-        #         stats_y + line_height * 5 + 50,
-        #     ),
-        # )
 
     def draw_pause(self):
         """Draw pause menu over the game."""

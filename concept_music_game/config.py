@@ -7,6 +7,7 @@ ROOT_PATH = Path(__file__).parent
 
 class GameState(Enum):
     MENU = "menu"
+    SLOT_SELECT = "slot_select"
     OPTIONS = "options"
     PLAY = "play"
     SONG_END = "song_end"

@@ -1,5 +1,7 @@
-import pygame
 import config
+import pygame
+import save
+
 from config import GameState
 from songs import SONGS
 
@@ -137,10 +139,10 @@ class MainMenu(Menu):
         for name, data in self.buttons.items():
             if data["rect"].collidepoint(event.pos):
                 if name == "start":
-                    self.game.set_state(GameState.PLAY)
+                    self.game.set_state(config.GameState.SLOT_SELECT)
                     return True
                 elif name == "options":
-                    self.game.set_state(GameState.OPTIONS)
+                    self.game.set_state(config.GameState.OPTIONS)
                     return True
                 elif name == "quit":
                     return False
@@ -575,6 +577,75 @@ class KeyBindingsMenu(SubMenu):
 
 
 # ---------------------------------------------------------------------------
+# Menu of save slot selection
+# ---------------------------------------------------------------------------
+
+
+class SlotSelectMenu(Menu):
+    """
+    Shown when the player clicks Start from the main menu.
+    Displays three save slots; selecting one loads it and enters play.
+    """
+
+    def __init__(self, game):
+        super().__init__(game, title="Select Save Slot")
+        self.button_width = 400
+        self.slots = []
+        self._build_buttons()
+
+    def _build_buttons(self):
+        self.buttons = {}
+        self.button_names = []
+        self.slots = save.list_saves()
+
+        for i, slot_data in enumerate(self.slots):
+            if slot_data is None:
+                label = f"Slot {i + 1}  |  Empty"
+                color = (60, 60, 60)
+            else:
+                songs_played = slot_data.get("songs_played", 0)
+                difficulty = slot_data.get("difficulty", "?")
+                label = f"Slot {i + 1}  |  {difficulty}  |  {songs_played} songs played"
+                color = (60, 100, 60)
+
+            self.create_button(
+                f"slot_{i}",
+                label,
+                config.DISPLAY_HEIGHT // 4 + i * 100,
+                color=color,
+            )
+
+        self.create_button(
+            "back", "Back", config.DISPLAY_HEIGHT // 4 + 340, color=(128, 128, 128)
+        )
+
+    def on_open(self):
+        """Refresh slot data each time the screen is shown."""
+        self.selected_index = 0
+        self.hovered_button = None
+        self._build_buttons()
+
+    def handle_click(self, event):
+        for name, data in self.buttons.items():
+            if data["rect"].collidepoint(event.pos):
+                if name == "back":
+                    self.game.set_state(config.GameState.MENU)
+                    return True
+                elif name.startswith("slot_"):
+                    slot = int(name[-1])
+                    save.load_save(slot, self.game)
+                    self.game.set_state(config.GameState.PLAY)
+                    return True
+        return True
+
+    def handle_key_press(self, event):
+        if event.key == pygame.K_ESCAPE:
+            self.game.set_state(config.GameState.MENU)
+            return True
+        return super().handle_key_press(event)
+
+
+# ---------------------------------------------------------------------------
 # Pause Menu
 # ---------------------------------------------------------------------------
 
@@ -598,6 +669,9 @@ class PauseMenu(Menu):
             "Return to Menu",
             config.DISPLAY_HEIGHT // 4 + 100,
             color=(150, 100, 100),
+        )
+        self.create_button(
+            "quit", "Save & Quit", config.DISPLAY_HEIGHT // 4 + 180, color=(80, 80, 80)
         )
 
         self.sub_pages = {"training": TrainingMenu(game)}
@@ -654,6 +728,10 @@ class PauseMenu(Menu):
                 elif name == "menu":
                     self.game.set_state(GameState.MENU)
                     return True
+                elif name == "quit":
+                    self.game._save_if_slot_active()
+                    pygame.quit()
+                    raise SystemExit
         return True
 
     def handle_key_press(self, event):
