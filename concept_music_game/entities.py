@@ -110,6 +110,8 @@ class MovingBlock(GameObject):
         else:
             self.direction = pygame.Vector2(-1, 0)
 
+        self.is_frozen = False
+
         colors = [
             (255, 255, 0),
             (0, 0, 255),
@@ -125,7 +127,8 @@ class MovingBlock(GameObject):
         self._apply_modifier_overlay()
 
     def update(self):
-        self.position += self.direction * self.speed
+        if not self.is_frozen:
+            self.position += self.direction * self.speed
 
     def _apply_modifier_overlay(self):
         """Apply a color overlay and symbol based on the note modifier."""
@@ -148,6 +151,16 @@ class MovingBlock(GameObject):
 
     def is_colliding(self):
         return self.rect().colliderect(self.target.rect())
+
+    def is_overlapping(self, threshold=0.9):
+        """
+        Returns True when the block overlaps its target button by at least
+        `threshold` of the block's own width (default 90%).
+        """
+        intersection = self.rect().clip(self.target.rect())
+        if intersection.width <= 0:
+            return False
+        return intersection.width >= self.width * threshold
 
 
 class KeyChangeMarker(GameObject):

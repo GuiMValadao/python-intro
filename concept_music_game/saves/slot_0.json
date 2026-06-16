@@ -9,15 +9,15 @@
     "F": 107,
     "G": 108
   },
-  "songs_played": 3,
+  "songs_played": 7,
   "high_scores": {
-    "song1": 36,
+    "song1": 39,
     "song2": 70,
-    "song3": 0,
-    "song4": 0,
+    "song3": 79,
+    "song4": 100,
     "song5": 0,
-    "song6": 145,
-    "song7": 0,
-    "song8": 0
+    "song6": 151,
+    "song7": 120,
+    "song8": 109
   }
 }

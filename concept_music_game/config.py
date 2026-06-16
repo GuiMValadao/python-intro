@@ -10,6 +10,7 @@ class GameState(Enum):
     SLOT_SELECT = "slot_select"
     OPTIONS = "options"
     PLAY = "play"
+    TUTORIAL = "tutorial"
     SONG_END = "song_end"
     PAUSE = "pause"
     DIALOGUE = "dialogue"

@@ -8,9 +8,15 @@ from entities import MovingBlock, NPCGeneric
 class TownNPC(NPCGeneric):
     """Beginner opponent — no interference, just plays the song straight."""
 
-    def on_dialogue_end(self, finished):
-        if finished:
-            self.dialogue_state = "retry"
+    def on_dialogue_end(self, selected_option=None):
+        if self.dialogue_state == "post_tutorial":
+            self.dialogue_state = "tutorial"
+            return None
+        # "intro" or "tutorial" — both have the yes/no choice
+        self.dialogue_state = "tutorial"
+        if selected_option == 0:
+            return "tutorial"
+        return None
 
 
 class DistractingBusker(NPCGeneric):

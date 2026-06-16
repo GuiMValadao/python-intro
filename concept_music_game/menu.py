@@ -605,7 +605,7 @@ class SlotSelectMenu(Menu):
             else:
                 songs_played = slot_data.get("songs_played", 0)
                 difficulty = slot_data.get("difficulty", "?")
-                label = f"Slot {i + 1}  |  {difficulty}  |  {songs_played} songs played"
+                label = f"Slot {i + 1}  |  {difficulty} | {songs_played} played"
                 color = (60, 100, 60)
 
             self.create_button(
@@ -659,8 +659,8 @@ class PauseMenu(Menu):
             "resume", "Resume", config.DISPLAY_HEIGHT // 4 - 60, color=(100, 150, 100)
         )
         self.create_button(
-            "training",
-            "Training",
+            "songs",
+            "Songs",
             config.DISPLAY_HEIGHT // 4 + 20,
             color=(80, 80, 150),
         )
@@ -674,7 +674,7 @@ class PauseMenu(Menu):
             "quit", "Save & Quit", config.DISPLAY_HEIGHT // 4 + 180, color=(80, 80, 80)
         )
 
-        self.sub_pages = {"training": TrainingMenu(game)}
+        self.sub_pages = {"songs": TrainingMenu(game)}
         self.active_sub_page = None
 
     def _open_sub_page(self, name):
@@ -722,8 +722,8 @@ class PauseMenu(Menu):
                 if name == "resume":
                     self.game.set_state(GameState.PLAY)
                     return True
-                elif name == "training":
-                    self._open_sub_page("training")
+                elif name == "songs":
+                    self._open_sub_page("songs")
                     return True
                 elif name == "menu":
                     self.game.set_state(GameState.MENU)
@@ -794,7 +794,11 @@ class TrainingMenu(SubMenu):
 
         y_offset = config.DISPLAY_HEIGHT // 4 - 40
         for i, song_key in enumerate(page_songs):
-            display_name = f"Song: {song_key.replace('song', '').upper()}"
+            best = self.game.high_scores.get(song_key, 0)
+            hs_str = str(best) if best > 0 else "-"
+            display_name = (
+                f"Song {song_key.replace('song', '').upper()}  |  HS: {hs_str}"
+            )
             color = (
                 (100, 200, 100) if song_key == config.CURRENT_SONG else (80, 80, 150)
             )

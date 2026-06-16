@@ -4,7 +4,7 @@ import save
 import pygame
 
 from entities import Player
-from events import BattleEvent, load_sound
+from events import BattleEvent, TutorialEvent, load_sound
 from menu import MainMenu, OptionsMenu, PauseMenu
 
 
@@ -38,6 +38,8 @@ class Game:
         self.player = Player(self)
         self.current_state = config.GameState.MENU
         self.battle_event = None
+        self.tutorial_event = None
+        self.tutorial_npc = None
 
         self.high_scores = {}
         self.songs_played = 0
@@ -94,6 +96,10 @@ class Game:
         self.current_map = self.maps["town_square"]
         self.camera = maps.Camera(self.current_map.width, self.current_map.height)
         self.player.position = self.current_map.spawn_point.copy()
+        if self.tutorial_event:
+            config.DIFFICULTY = self.tutorial_event._saved_difficulty
+        self.tutorial_event = None
+        self.tutorial_npc = None
 
     def _save_if_slot_active(self):
         """Write to the active slot if one is loaded."""
@@ -135,6 +141,8 @@ class Game:
 
                 self.slot_select_menu = SlotSelectMenu(self)
             self.slot_select_menu.on_open()
+        elif new_state == config.GameState.TUTORIAL:
+            pass
         elif new_state == config.GameState.PAUSE:
             # Reset pause menu selection
             self.pause_menu.selected_index = 0
@@ -158,6 +166,8 @@ class Game:
                 return self.handle_options_input(event)
             elif self.current_state == config.GameState.PLAY:
                 return self.handle_play_input(event)
+            if self.current_state == config.GameState.TUTORIAL:
+                return self.handle_tutorial_input(event)
             elif self.current_state == config.GameState.DIALOGUE:
                 return self.handle_dialogue_input(event)
             elif self.current_state == config.GameState.PAUSE:
@@ -219,20 +229,30 @@ class Game:
             elif event.key == config.INTERACTION_KEY:
                 talk.select()
                 if talk.finished:
-                    talk.npc.on_dialogue_end(talk.finished)
-                    if talk.start_battle:
-                        from events import BattleEvent
-
+                    result = talk.npc.on_dialogue_end(talk.selected_option)
+                    self.current_event = None
+                    if result == "tutorial":
+                        self.tutorial_npc = talk.npc
+                        self.tutorial_event = TutorialEvent(self, npc=talk.npc)
+                        self.set_state(config.GameState.TUTORIAL)
+                    elif result == "battle":
                         config.CURRENT_SONG = talk.npc.song_key
                         self.battle_event = BattleEvent(self, npc=talk.npc)
-                    self.current_event = None
-                    self.set_state(config.GameState.PLAY)
+                        self.set_state(config.GameState.PLAY)
+                    else:
+                        self.set_state(config.GameState.PLAY)
         else:
             if event.key == config.INTERACTION_KEY:
                 talk.advance()
                 if talk.finished:
+                    result = talk.npc.on_dialogue_end(None)
                     self.current_event = None
-                    self.set_state(config.GameState.PLAY)
+                    if result == "tutorial":
+                        self.tutorial_npc = talk.npc
+                        self.tutorial_event = TutorialEvent(self, npc=talk.npc)
+                        self.set_state(config.GameState.TUTORIAL)
+                    else:
+                        self.set_state(config.GameState.PLAY)
         return True
 
     def handle_play_input(self, event):
@@ -269,6 +289,11 @@ class Game:
                 sound_key = (event.key, modifier)
                 if sound_key in self.note_sounds:
                     self.note_sounds[sound_key].play()
+        return True
+
+    def handle_tutorial_input(self, event):
+        if event.type == pygame.KEYDOWN and self.tutorial_event:
+            self.tutorial_event.handle_input(event)
         return True
 
     def handle_song_end_input(self, event):
@@ -316,6 +341,18 @@ class Game:
             # Only move player when actually playing (not paused)
             self.player.move()
             self.camera.follow(self.player)
+        elif self.current_state == config.GameState.TUTORIAL:
+            if self.tutorial_event:
+                self.tutorial_event.update()
+                if self.tutorial_event.finished:
+                    npc = self.tutorial_npc
+                    npc.dialogue_state = "post_tutorial"
+                    from events import TalkEvent
+
+                    self.current_event = TalkEvent(self, npc=npc)
+                    self.tutorial_event = None
+                    self.tutorial_npc = None
+                    self.set_state(config.GameState.DIALOGUE)
 
     def draw(self):
         """Draw based on current state."""
@@ -333,6 +370,9 @@ class Game:
             self.draw_pause()
         elif self.current_state == config.GameState.SONG_END:
             self.draw_song_end()
+        elif self.current_state == config.GameState.TUTORIAL:
+            if self.tutorial_event:
+                self.tutorial_event.draw()
 
     def draw_menu(self):
         """Draw menu screen."""
