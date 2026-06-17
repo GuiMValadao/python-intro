@@ -1,8 +1,17 @@
 import pygame
+import sys
+
 from pathlib import Path
 from enum import Enum
 
-ROOT_PATH = Path(__file__).parent
+
+def _get_root_path():
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent
+
+
+ROOT_PATH = _get_root_path()
 
 
 class GameState(Enum):

@@ -620,8 +620,6 @@ class BattleEvent:
         Draw the current key signature in the top-right corner of the screen.
         Hidden on Hard mode.
         """
-        if config.DIFFICULTY == "Hard":
-            return
 
         display_name = config.KEY_SIGNATURE_DISPLAY.get(
             config.CURRENT_KEY_SIGNATURE, config.CURRENT_KEY_SIGNATURE
@@ -845,6 +843,8 @@ class TutorialEvent:
                 "These are the note buttons on the left of the screen.",
                 "Each one corresponds to a key on your keyboard.",
                 "Beware, the letters you see corresponde to the note name, and not to a key",
+                "The default are A, S, D, H, J, K and L for the notes from A to G.",
+                "You can change these from the options menu in main menu."
                 "Blocks travel from the right toward these buttons.",
                 "Press the matching key when a block overlaps its button!",
             ],

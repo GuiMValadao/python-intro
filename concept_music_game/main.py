@@ -88,18 +88,18 @@ class Game:
 
         # Reset battle event
         self.battle_event = None
-
-        # Recreate menus to reset their state
-        self.main_menu = MainMenu(self)
-        self.options_menu = OptionsMenu(self)
-        self.pause_menu = PauseMenu(self)
-        self.current_map = self.maps["town_square"]
-        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
-        self.player.position = self.current_map.spawn_point.copy()
         if self.tutorial_event:
             config.DIFFICULTY = self.tutorial_event._saved_difficulty
         self.tutorial_event = None
         self.tutorial_npc = None
+        # Recreate menus to reset their state
+        self.main_menu = MainMenu(self)
+        self.options_menu = OptionsMenu(self)
+        self.pause_menu = PauseMenu(self)
+        self.slot_select_menu = None
+        self.current_map = self.maps["town_square"]
+        self.camera = maps.Camera(self.current_map.width, self.current_map.height)
+        self.player.position = self.current_map.spawn_point.copy()
 
     def _save_if_slot_active(self):
         """Write to the active slot if one is loaded."""
@@ -166,7 +166,7 @@ class Game:
                 return self.handle_options_input(event)
             elif self.current_state == config.GameState.PLAY:
                 return self.handle_play_input(event)
-            if self.current_state == config.GameState.TUTORIAL:
+            elif self.current_state == config.GameState.TUTORIAL:
                 return self.handle_tutorial_input(event)
             elif self.current_state == config.GameState.DIALOGUE:
                 return self.handle_dialogue_input(event)
@@ -390,6 +390,9 @@ class Game:
         screen_pos = self.camera.apply(self.player.position)
         self.display_surface.blit(self.player.image, screen_pos)
 
+        if self.battle_event is None:
+            self._draw_npc_interaction_prompts()
+
         if self.battle_event:
             # Battle UI draws in screen space — no camera offset needed
             self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
@@ -398,6 +401,26 @@ class Game:
                 f"Score: {int(self.battle_event.score)}", True, (255, 255, 255)
             )
             self.display_surface.blit(score_surface, (20, 20))
+
+    def _draw_npc_interaction_prompts(self):
+        """Draw an interaction hint above any NPC the player is close enough to talk to."""
+        key_name = config.get_key_name(config.INTERACTION_KEY)
+        font = pygame.font.SysFont(config.GAME_FONT, 20)
+        prompt = font.render(f"[ {key_name} ] Talk", True, (255, 255, 255))
+
+        for npc in self.current_map.npcs:
+            if self.player.rect().colliderect(npc.interaction_rect()):
+                screen_pos = self.camera.apply(npc.position)
+                # Centre above the NPC sprite with a small background
+                prompt_x = screen_pos.x + npc.width // 2 - prompt.get_width() // 2
+                prompt_y = screen_pos.y - prompt.get_height() - 8
+
+                bg = pygame.Surface(
+                    (prompt.get_width() + 10, prompt.get_height() + 6), pygame.SRCALPHA
+                )
+                bg.fill((0, 0, 0, 160))
+                self.display_surface.blit(bg, (prompt_x - 5, prompt_y - 3))
+                self.display_surface.blit(prompt, (prompt_x, prompt_y))
 
     def draw_dialogue(self):
         self.draw_play()  # world still visible behind the text box
@@ -522,14 +545,10 @@ class Game:
 
     def draw_pause(self):
         """Draw pause menu over the game."""
-        # First draw the game in background
-        self.display_surface.blit(self.BACKGROUND, (0, 0))
-        self.player.draw()
-        if self.battle_event:
-            self.display_surface.blit(self.BATTLE_BACKGROUND, (0, 0))
-            self.battle_event.draw()
-
-        # Then draw pause menu on top
+        self.current_map.draw(self.display_surface, self.camera)
+        self.current_map.draw_npcs(self.display_surface, self.camera)
+        screen_pos = self.camera.apply(self.player.position)
+        self.display_surface.blit(self.player.image, screen_pos)
         self.pause_menu.draw(self.display_surface)
 
     def handle_mouse_motion(self, event):

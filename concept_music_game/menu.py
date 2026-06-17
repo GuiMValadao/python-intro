@@ -582,15 +582,11 @@ class KeyBindingsMenu(SubMenu):
 
 
 class SlotSelectMenu(Menu):
-    """
-    Shown when the player clicks Start from the main menu.
-    Displays three save slots; selecting one loads it and enters play.
-    """
-
     def __init__(self, game):
         super().__init__(game, title="Select Save Slot")
         self.button_width = 400
         self.slots = []
+        self.confirm_delete_slot = None  # index of slot pending confirmation
         self._build_buttons()
 
     def _build_buttons(self):
@@ -605,7 +601,7 @@ class SlotSelectMenu(Menu):
             else:
                 songs_played = slot_data.get("songs_played", 0)
                 difficulty = slot_data.get("difficulty", "?")
-                label = f"Slot {i + 1}  |  {difficulty} | {songs_played} played"
+                label = f"Slot {i + 1}  |  {difficulty}  |  {songs_played} songs"
                 color = (60, 100, 60)
 
             self.create_button(
@@ -615,21 +611,118 @@ class SlotSelectMenu(Menu):
                 color=color,
             )
 
+            # Delete button — only for filled slots
+            if slot_data is not None:
+                old_width = self.button_width
+                self.button_width = 40
+                self.create_button(
+                    f"delete_{i}",
+                    "X",
+                    config.DISPLAY_HEIGHT // 4 + i * 100,
+                    color=(160, 40, 40),
+                    x_center=config.DISPLAY_WIDTH // 2 + old_width // 2 + 30,
+                )
+                self.button_width = old_width
+
         self.create_button(
             "back", "Back", config.DISPLAY_HEIGHT // 4 + 340, color=(128, 128, 128)
         )
 
+    def _build_confirm_buttons(self, slot):
+        """Replace normal buttons with a yes/no confirmation prompt."""
+        self.buttons = {}
+        self.button_names = []
+        self.button_width = 160
+
+        self.create_button(
+            "confirm_yes",
+            "Yes, delete",
+            config.DISPLAY_HEIGHT // 2 - 40,
+            color=(160, 40, 40),
+            x_center=config.DISPLAY_WIDTH // 2 - 90,
+        )
+        self.create_button(
+            "confirm_no",
+            "Cancel",
+            config.DISPLAY_HEIGHT // 2 - 40,
+            color=(80, 80, 80),
+            x_center=config.DISPLAY_WIDTH // 2 + 90,
+        )
+
     def on_open(self):
-        """Refresh slot data each time the screen is shown."""
         self.selected_index = 0
         self.hovered_button = None
+        self.confirm_delete_slot = None
         self._build_buttons()
+
+    def draw(self, display_surface):
+        display_surface.fill(config.MENU_BACKGROUND)
+
+        title_font = pygame.font.SysFont(config.GAME_FONT, 36)
+        title_surf = title_font.render(self.title, True, (200, 200, 200))
+        display_surface.blit(
+            title_surf,
+            title_surf.get_rect(
+                center=(config.DISPLAY_WIDTH // 2, config.DISPLAY_HEIGHT // 8)
+            ),
+        )
+
+        # Confirmation prompt overlay
+        if self.confirm_delete_slot is not None:
+            prompt_font = pygame.font.SysFont(config.GAME_FONT, 30)
+            prompt = prompt_font.render(
+                f"Delete Slot {self.confirm_delete_slot + 1}? This cannot be undone.",
+                True,
+                (255, 100, 100),
+            )
+            display_surface.blit(
+                prompt,
+                prompt.get_rect(
+                    center=(config.DISPLAY_WIDTH // 2, config.DISPLAY_HEIGHT // 2 - 90)
+                ),
+            )
+
+        for i, button_name in enumerate(self.button_names):
+            button_data = self.buttons[button_name]
+            display_surface.blit(button_data["surface"], button_data["rect"].topleft)
+            if i == self.selected_index:
+                overlay = pygame.Surface(
+                    (button_data["rect"].width, button_data["rect"].height),
+                    pygame.SRCALPHA,
+                )
+                overlay.fill((0, 0, 0, 160))
+                display_surface.blit(overlay, button_data["rect"].topleft)
 
     def handle_click(self, event):
         for name, data in self.buttons.items():
             if data["rect"].collidepoint(event.pos):
+                if self.confirm_delete_slot is not None:
+                    # Confirmation mode
+                    if name == "confirm_yes":
+                        save.delete_slot(self.confirm_delete_slot)
+                        # If deleting active slot, clear session data
+                        if self.confirm_delete_slot == self.game.current_slot:
+                            self.game.current_slot = None
+                            self.game.high_scores = {}
+                            self.game.songs_played = 0
+                        self.confirm_delete_slot = None
+                        self._build_buttons()
+                        self.selected_index = 0
+                    elif name == "confirm_no":
+                        self.confirm_delete_slot = None
+                        self._build_buttons()
+                        self.selected_index = 0
+                    return True
+
+                # Normal mode
                 if name == "back":
                     self.game.set_state(config.GameState.MENU)
+                    return True
+                elif name.startswith("delete_"):
+                    slot = int(name[-1])
+                    self.confirm_delete_slot = slot
+                    self._build_confirm_buttons(slot)
+                    self.selected_index = 0
                     return True
                 elif name.startswith("slot_"):
                     slot = int(name[-1])
@@ -640,6 +733,12 @@ class SlotSelectMenu(Menu):
 
     def handle_key_press(self, event):
         if event.key == pygame.K_ESCAPE:
+            if self.confirm_delete_slot is not None:
+                # Escape cancels confirmation
+                self.confirm_delete_slot = None
+                self._build_buttons()
+                self.selected_index = 0
+                return True
             self.game.set_state(config.GameState.MENU)
             return True
         return super().handle_key_press(event)

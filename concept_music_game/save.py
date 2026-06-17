@@ -1,8 +1,15 @@
-import json
 import config
+import json
+import sys
 from pathlib import Path
 
-SAVE_DIR = config.ROOT_PATH / "saves"
+if getattr(sys, "frozen", False):
+    # Write saves next to the .exe
+    _exe_dir = Path(sys.executable).parent
+    SAVE_DIR = _exe_dir / "saves"
+else:
+    SAVE_DIR = config.ROOT_PATH / "saves"
+
 SLOT_COUNT = 3
 
 
@@ -99,3 +106,10 @@ def _write_slot(slot: int, data: dict) -> None:
     SAVE_DIR.mkdir(exist_ok=True)
     with open(_slot_path(slot), "w") as f:
         json.dump(data, f, indent=2)
+
+
+def delete_slot(slot: int) -> None:
+    """Remove a save slot file if it exists."""
+    path = _slot_path(slot)
+    if path.exists():
+        path.unlink()
