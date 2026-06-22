@@ -10,5 +10,5 @@ Some of the features of the prototype are:
 * Difficulty settings; 'Hard' is the default and intended way, 'Medium' and 'Easy' slows the movement of the blocks and decreases their amount
 * Song selection screen. To play a selected song, it's necessary to be in the game map and click 'B'. Clicking 'B' from inside the song play screen returns to the game world.
 
+* The suggested way to launch the game is by executing 'MusicGame.exe', created using pyinstall. Alternatively, the entry point is found in main.py, which can be, then, launched using Python3. However, due Pygame incompatibility with Python 3.14, this way can require some adjustment of the python environment (the Python version for the project is 3.13.12, and Pygame version is 2.6.1).
 
-* A forma sugerida para executar o jogo, pode-se lançar o executável 'MusicGame.exe', que foi criado usando pyinstall. Alternativamente, pode-se executar main.py usando Python3. No entanto, devido a incompatibilidade de PyGame com a versão 3.14 de Python, pode-se haver dificuldades de baixar pygame para essa versão do Python (a versão do Python desse projeto é 3.13.12, e a versão do Pygame é 2.6.1).
